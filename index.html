@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twoje miejsce na weselu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Znajdź swoje miejsce</h1>
+  <input type="text" id="search" placeholder="Wpisz swoje imię i nazwisko" />
+  <button onclick="findGuest()">Szukaj</button>
+  <div id="result"></div>
+
+  <script>
+    const guests = [
+      { imie: "Anna Maria", nazwisko: "Armata", stolik: "E", miejsce: "1" },
+      { imie: "Jacek", nazwisko: "Leszkiewicz", stolik: "E", miejsce: "2" },
+      { imie: "Marcel", nazwisko: "Gumienny", stolik: "C", miejsce: "1" },
+      { imie: "Inga", nazwisko: "Cherek", stolik: "B", miejsce: "1" },
+      { imie: "Borys", nazwisko: "Wiekiera", stolik: "B", miejsce: "2" },
+      { imie: "Jerzy", nazwisko: "Strządała", stolik: "A", miejsce: "1" },
+      { imie: "Jan", nazwisko: "Samol", stolik: "B", miejsce: "3" },
+      { imie: "Witold", nazwisko: "Groborz", stolik: "D", miejsce: "1" },
+      { imie: "Anastazja", nazwisko: "Armata", stolik: "E", miejsce: "3" },
+      { imie: "Marika", nazwisko: "Cymbała", stolik: "A", miejsce: "2" },
+      { imie: "Konrad", nazwisko: "Boguta", stolik: "E", miejsce: "4" },
+      { imie: "Filip", nazwisko: "Lubera", stolik: "B", miejsce: "4" },
+      { imie: "Jędrzej", nazwisko: "Podsiadła", stolik: "D", miejsce: "2" },
+      { imie: "Anna Maria", nazwisko: "Grabczak", stolik: "C", miejsce: "2" },
+      { imie: "Tola", nazwisko: "Pielka", stolik: "C", miejsce: "3" },
+      { imie: "Wiktor", nazwisko: "Ciesiółka", stolik: "B", miejsce: "5" },
+      { imie: "Daniel", nazwisko: "Pudełek", stolik: "E", miejsce: "5" },
+      { imie: "Emil", nazwisko: "Machul", stolik: "B", miejsce: "6" },
+      { imie: "Anastazja", nazwisko: "Bernatowicz", stolik: "A", miejsce: "3" },
+      { imie: "Oskar", nazwisko: "Prucnal", stolik: "D", miejsce: "3" },
+      { imie: "Dawid", nazwisko: "Kobak", stolik: "E", miejsce: "6" },
+      { imie: "Arkadiusz", nazwisko: "Jenek", stolik: "D", miejsce: "4" },
+      { imie: "Wiktor", nazwisko: "Wojtoń", stolik: "D", miejsce: "5" },
+      { imie: "Miłosz", nazwisko: "Wiszowata", stolik: "E", miejsce: "7" },
+      { imie: "Maks", nazwisko: "Buczma", stolik: "B", miejsce: "7" },
+      { imie: "Maurycy", nazwisko: "Kozdra", stolik: "A", miejsce: "4" },
+      { imie: "Kamil", nazwisko: "Kiełbowicz", stolik: "B", miejsce: "8" },
+      { imie: "Melania", nazwisko: "Kozień", stolik: "E", miejsce: "8" },
+      { imie: "Jerzy", nazwisko: "Bajak", stolik: "C", miejsce: "4" },
+      { imie: "Marek", nazwisko: "Ratka", stolik: "E", miejsce: "9" },
+      { imie: "Liwia", nazwisko: "Nóżka", stolik: "A", miejsce: "5" },
+      { imie: "Łukasz", nazwisko: "Kubek", stolik: "A", miejsce: "6" },
+      { imie: "Sebastian", nazwisko: "Szymonik", stolik: "D", miejsce: "6" },
+      { imie: "Mieszko", nazwisko: "Berdzik", stolik: "B", miejsce: "9" },
+      { imie: "Urszula", nazwisko: "Czubaj", stolik: "C", miejsce: "5" },
+      { imie: "Ewelina", nazwisko: "Zubel", stolik: "A", miejsce: "7" },
+      { imie: "Iwo", nazwisko: "Wacławiak", stolik: "C", miejsce: "6" },
+      { imie: "Bruno", nazwisko: "Widuch", stolik: "A", miejsce: "8" },
+      { imie: "Alex", nazwisko: "Koral", stolik: "C", miejsce: "7" },
+      { imie: "Olga", nazwisko: "Radko", stolik: "B", miejsce: "10" },
+      { imie: "Rozalia", nazwisko: "Trawka", stolik: "B", miejsce: "11" },
+      { imie: "Janina", nazwisko: "Kubrak", stolik: "C", miejsce: "8" },
+      { imie: "Kajetan", nazwisko: "Furga", stolik: "D", miejsce: "7" },
+      { imie: "Anastazja", nazwisko: "Magier", stolik: "A", miejsce: "9" },
+      { imie: "Monika", nazwisko: "Wesoła", stolik: "E", miejsce: "10" },
+      { imie: "Cezary", nazwisko: "Bachanek", stolik: "D", miejsce: "8" },
+      { imie: "Juliusz", nazwisko: "Manista", stolik: "A", miejsce: "10" },
+      { imie: "Anna Maria", nazwisko: "Leśny", stolik: "B", miejsce: "12" },
+      { imie: "Kamil", nazwisko: "Stępak", stolik: "D", miejsce: "9" },
+      { imie: "Emil", nazwisko: "Prokopiak", stolik: "A", miejsce: "11" },
+      { imie: "Eliza", nazwisko: "Domżał", stolik: "C", miejsce: "9" },
+      { imie: "Jan", nazwisko: "Prokopiak", stolik: "A", miejsce: "12" },
+      { imie: "Jakub", nazwisko: "Wójt", stolik: "D", miejsce: "10" },
+      { imie: "Albert", nazwisko: "Stiller", stolik: "D", miejsce: "11" },
+      { imie: "Kazimierz", nazwisko: "Jantos", stolik: "B", miejsce: "13" },
+      { imie: "Franciszek", nazwisko: "Moneta", stolik: "E", miejsce: "11" },
+      { imie: "Stanisław", nazwisko: "Hajdasz", stolik: "C", miejsce: "10" },
+      { imie: "Aleks", nazwisko: "Święs", stolik: "A", miejsce: "13" },
+      { imie: "Fabian", nazwisko: "Ziniewicz", stolik: "C", miejsce: "11" },
+      { imie: "Adrianna", nazwisko: "Chyb", stolik: "D", miejsce: "12" },
+      { imie: "Mateusz", nazwisko: "Startek", stolik: "C", miejsce: "12" },
+      { imie: "Nicole", nazwisko: "Nowek", stolik: "B", miejsce: "14" },
+      { imie: "Adrian", nazwisko: "Pawlonka", stolik: "C", miejsce: "13" },
+      { imie: "Ada", nazwisko: "Wizner", stolik: "A", miejsce: "14" },
+      { imie: "Dominik", nazwisko: "Mol", stolik: "C", miejsce: "14" },
+      { imie: "Alan", nazwisko: "Buksa", stolik: "E", miejsce: "12" },
+      { imie: "Konstanty", nazwisko: "Nieścior", stolik: "D", miejsce: "13" },
+      { imie: "Franciszek", nazwisko: "Sankiewicz", stolik: "A", miejsce: "15" },
+      { imie: "Gaja", nazwisko: "Soczewka", stolik: "E", miejsce: "13" },
+      { imie: "Jan", nazwisko: "Startek", stolik: "D", miejsce: "14" },
+      { imie: "Norbert", nazwisko: "Miękina", stolik: "A", miejsce: "16" },
+      { imie: "Błażej", nazwisko: "Augustynek", stolik: "B", miejsce: "15" },
+      { imie: "Stefan", nazwisko: "Pasztaleniec", stolik: "C", miejsce: "15" },
+      { imie: "Maurycy", nazwisko: "Lesik", stolik: "B", miejsce: "16" },
+      { imie: "Eryk", nazwisko: "Langa", stolik: "A", miejsce: "17" },
+      { imie: "Karina", nazwisko: "Budkiewicz", stolik: "E", miejsce: "14" },
+      { imie: "Olaf", nazwisko: "Linkiewicz", stolik: "B", miejsce: "17" },
+      { imie: "Cyprian", nazwisko: "Deluga", stolik: "E", miejsce: "15" },
+      { imie: "Olaf", nazwisko: "Gregorowicz", stolik: "D", miejsce: "15" },
+      { imie: "Emil", nazwisko: "Matuszyk", stolik: "C", miejsce: "16" },
+      { imie: "Kornel", nazwisko: "Duczek", stolik: "B", miejsce: "18" },
+      { imie: "Ida", nazwisko: "Chwedoruk", stolik: "C", miejsce: "17" },
+      { imie: "Emil", nazwisko: "Fogel", stolik: "C", miejsce: "18" },
+      { imie: "Marcel", nazwisko: "Myszk", stolik: "A", miejsce: "18" },
+      { imie: "Anastazja", nazwisko: "Mycek", stolik: "E", miejsce: "16" },
+      { imie: "Konrad", nazwisko: "Wichłacz", stolik: "D", miejsce: "16" },
+      { imie: "Arkadiusz", nazwisko: "Osial", stolik: "E", miejsce: "17" },
+      { imie: "Kamila", nazwisko: "Lepak", stolik: "A", miejsce: "19" },
+      { imie: "Kamil", nazwisko: "Wosiak", stolik: "E", miejsce: "18" },
+      { imie: "Kamila", nazwisko: "Gołek", stolik: "E", miejsce: "19" },
+      { imie: "Dawid", nazwisko: "Mądrzak", stolik: "B", miejsce: "19" },
+      { imie: "Bartek", nazwisko: "Szymańczyk", stolik: "B", miejsce: "20" },
+      { imie: "Sonia", nazwisko: "Świerkot", stolik: "D", miejsce: "17" },
+      { imie: "Blanka", nazwisko: "Kulma", stolik: "C", miejsce: "19" },
+      { imie: "Mieszko", nazwisko: "Wojsław", stolik: "D", miejsce: "18" },
+      { imie: "Filip", nazwisko: "Zybura", stolik: "A", miejsce: "20" },
+      { imie: "Daniel", nazwisko: "Bekus", stolik: "D", miejsce: "19" },
+      { imie: "Justyna", nazwisko: "Karczmarek", stolik: "D", miejsce: "20" },
+      { imie: "Tymon", nazwisko: "Miszta", stolik: "E", miejsce: "20" },
+      { imie: "Igor", nazwisko: "Behrendt", stolik: "C", miejsce: "20" }
+    ];
+
+    function findGuest() {
+      const input = document.getElementById("search").value.toLowerCase().trim();
+      const resultDiv = document.getElementById("result");
+
+      const guest = guests.find(g => 
+        (`${g.imie} ${g.nazwisko}`.toLowerCase() === input)
+      );
+
+      if (guest) {
+        resultDiv.textContent = `Dziś siedzisz przy stoliku ${guest.stolik} na miejscu ${guest.miejsce}.`;
+      } else {
+        resultDiv.textContent = "Nie znaleziono takiego nazwiska. Sprawdź pisownię.";
+      }
+    }
+  </script>
+</body>
+</html>
