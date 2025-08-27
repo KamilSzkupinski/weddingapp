@@ -21,7 +21,7 @@
       --floor-shift: 0px;    /* stały offset parkietu w lewo */
     }
     * { box-sizing: border-box; }
-    html, body { height: 130%; overflow-x: auto; }
+    html, body { height: 135%; overflow-x: auto; }
     body {
       margin: 0;
       background: linear-gradient(to bottom, var(--bg1), var(--bg2));
@@ -68,10 +68,11 @@
       max-width: none;
       margin: 0 auto;
       padding: 8px 20px 30px;
-      display: grid;
+      display: flex;
       min-width: calc(200px + var(--tables-width) + var(--bride-gap) + 80px);
       grid-template-columns: 200px 1fr;
       gap: 24px;
+	  justify-content:center;
     }
 
     /* Parkiet po lewej – stały wygląd */
@@ -81,12 +82,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      position: sticky;
-      top: 10px;
-      height: 100%;
-      min-height: 520px;
+      position: relative;
       transform: translateX(var(--floor-shift));
-    
+	align-self: stretch;
       width: 180px;
     }
     .floor span {
@@ -181,6 +179,10 @@
       display: grid;
       place-items: center;
     }
+	.bride-rect.active {
+		box-shadow: 0 0 0 3px var(--accent-strong) inset, 0 10px 20px rgba(0,0,0,.08);
+		transform: translateY(-2px);
+	}
     .bride-rect .label {
       writing-mode: vertical-rl;
       transform: rotate(0deg);
@@ -608,6 +610,8 @@
     function clearHighlights() {
       document.querySelectorAll(".seat.you").forEach(el => el.classList.remove("you"));
       document.querySelectorAll(".table-rect.active").forEach(el => el.classList.remove("active"));
+	  document.querySelectorAll(".bride-rect.active").forEach(el => el.classList.remove("active")); // +++
+
     }
     function findGuest() {
       const input = document.getElementById("search").value;
@@ -642,7 +646,8 @@
         const seatEl = brideSeats.querySelector(`.seat[data-seat="${seatNum}"]`);
         if (seatEl) seatEl.classList.add("you");
         document.getElementById("brideWrap").scrollIntoView({ behavior: "smooth", block: "center" });
-        return;
+          document.getElementById("brideRect")?.classList.add("active");
+		return;
       }
 
       const block = document.querySelector(`.table-block[data-table="${tableId}"]`);
@@ -658,6 +663,23 @@
     document.getElementById("search").addEventListener("keydown", (e) => {
       if (e.key === "Enter") findGuest();
     });
+	function gotoSearch(behavior = "auto") {
+    // przewiń do lewego brzegu i do nagłówka z wyszukiwarką
+    window.scrollTo({ left: 0, top: 0, behavior });
+    const header = document.querySelector("header");
+    if (header) header.scrollIntoView({ behavior, block: "start", inline: "start" });
+    const input = document.getElementById("search");
+    if (input) input.focus({ preventScroll: true }); // opcjonalnie otwiera klawiaturę na mobile
+  }
+
+  // uruchom po załadowaniu (dwustopniowo, żeby zadziałało na iOS/Android)
+  window.addEventListener("load", () => gotoSearch("auto"));
+  // gdy przeglądarka ustawi viewport (czasem po krótkiej chwili)
+  setTimeout(() => gotoSearch("auto"), 50);
+
+  // dodatkowo po zmianie orientacji/rozmiaru
+  window.addEventListener("orientationchange", () => setTimeout(gotoSearch, 50));
+  window.addEventListener("resize", () => setTimeout(gotoSearch, 50));
   </script>
 </body>
 </html>
