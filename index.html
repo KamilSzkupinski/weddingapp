@@ -4,155 +4,636 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Twoje miejsce na weselu</title>
+  <title>Wesele X & X – Interaktywna mapa stołów</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg1: #fdf8f4;
+      --bg2: #f9ece3;
+      --ink: #332d29;
+      --accent: #b99a84;
+      --accent-strong: #8c7b75;
+      --gold: #ffd700;
+
+      --tables-width: 1080px;
+      --bride-gap: 220px;
+      --floor-shift: -56px;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      background: #fafafa;
+      margin: 0;
+      background: linear-gradient(to bottom, var(--bg1), var(--bg2));
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    header {
+      padding: 24px 16px 8px;
+      text-align: center;
+    }
+    header h1 {
+      font-family: "Great Vibes", cursive;
+      font-size: 40px;
+      margin: 0 0 6px;
+    }
+    header p { margin: 0; opacity: .85; }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 16px 8px;
+      flex-wrap: wrap;
+    }
+    .controls input {
+      padding: 12px 14px;
+      border: 1px solid #d6c8bf;
+      border-radius: 10px;
+      min-width: 280px;
+      font-size: 16px;
+      background: #fff;
+    }
+    .controls button {
+      padding: 12px 18px;
+      border: 1px solid #d6c8bf;
+      border-radius: 10px;
+      background: #efe3db;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .controls button:hover { background: #e5d7ce; }
+
+    .layout {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 8px 20px 30px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+    }
+
+    .floor {
+      background: #d2bda9;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: sticky;
+      top: 10px;
+      height: 100%;
+      min-height: 520px;
+      transform: translateX(var(--floor-shift));
+    }
+    .floor span {
+      font-family: Georgia, serif;
+      font-size: 38px;
+      color: #222;
+      letter-spacing: .5px;
+    }
+
+    .tables-wrap {
+      position: relative;
+      padding-right: var(--bride-gap);
+      min-height: 600px;
+      overflow: visible;
+    }
+    .tables {
       display: flex;
       flex-direction: column;
+      gap: 28px;
+    }
+    .table-block {
+      display: grid;
+      grid-template-rows: auto 68px auto;
+      gap: 12px;
       align-items: center;
-      padding: 40px;
+      justify-items: center;
+      padding: 2px 0;
     }
-    h1 {
-      margin-bottom: 20px;
+    .table-rect {
+      width: min(var(--tables-width), 100%);
+      height: 68px;
+      background: #e7d7cc;
+      border: 2px solid var(--accent-strong);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      transition: box-shadow .25s ease, transform .2s ease;
     }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin: 5px;
+    .table-rect.active {
+      box-shadow: 0 0 0 3px var(--accent-strong) inset, 0 10px 20px rgba(0,0,0,.08);
+      transform: translateY(-2px);
     }
-    #result {
-      margin-top: 20px;
-      font-weight: bold;
-      font-size: 18px;
+    .table-rect .label {
+      font-weight: 700;
+      font-size: 22px;
+      color: #2b2420;
+    }
+
+    .seats-row {
+      display: grid;
+      gap: 8px;
+      width: min(var(--tables-width), 100%);
+      justify-items: center;
+    }
+    .seat {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent-strong);
+      background: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      user-select: none;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .seat:hover { transform: translateY(-2px); }
+    .seat.you {
+      background: var(--gold);
+      box-shadow: 0 0 0 3px #b99a84 inset, 0 0 18px rgba(255, 204, 0, .6);
+      font-weight: 700;
+    }
+
+    .bride-wrap {
+      position: absolute;
+      right: 0;
+      top: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 14px;
+    }
+    .bride-rect {
+      width: 68px;
+      /* height będzie ustawiona dynamicznie w JS */
+      background: #fff7cc;
+      border: 2px solid var(--accent-strong);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+    }
+    .bride-rect .label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-weight: 700;
+      color: #2b2420;
+    }
+    .bride-seats {
+      display: grid;
+      grid-auto-flow: row;
+      grid-auto-rows: 40px;
+      gap: 10px;
+      align-items: start;
+      justify-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .tables-wrap {
+        padding-right: 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .floor { position: relative; transform: translateX(0); min-height: 200px; }
+      .seat { width: 40px; height: 40px; font-size: 14px; }
+      .table-rect { height: 72px; }
     }
   </style>
 </head>
 <body>
-  <h1>Znajdź swoje miejsce</h1>
-  <input type="text" id="search" placeholder="Wpisz swoje imię i nazwisko" />
-  <button onclick="findGuest()">Szukaj</button>
-  <div id="result"></div>
+  <header>
+    <h1>Witamy na weselu Darii &amp; Daniela!</h1>
+    <p>Chcieliśmy wam ułatwić znalezienie swojego miejsca, więc zapraszamy do korzystania!</p>
+    <div class="controls">
+      <input id="search" type="text" placeholder="Wpisz swoje imię i nazwisko" />
+      <button id="btn">Szukaj</button>
+    </div>
+  </header>
+
+  <section class="layout">
+    <aside class="floor" aria-label="Parkiet">
+      <span>Parkiet</span>
+    </aside>
+
+  <main class="tables-wrap">
+      <div class="tables" id="tables"></div>
+
+      <div class="bride-wrap" id="brideWrap" aria-label="Stół Młodych">
+        <div class="bride-rect" id="brideRect"><span class="label">Stół Młodych</span></div>
+        <div class="bride-seats" id="brideSeats"></div>
+      </div>
+
+      <p class="legend">Wyszukaj swoje imię i nazwisko – podświetlimy właściwy stolik i miejsce.</p>
+    </main>
+  </section>
 
   <script>
     const guests = [
-      { imie: "Anna Maria", nazwisko: "Armata", stolik: "E", miejsce: "1" },
-      { imie: "Jacek", nazwisko: "Leszkiewicz", stolik: "E", miejsce: "2" },
-      { imie: "Marcel", nazwisko: "Gumienny", stolik: "C", miejsce: "1" },
-      { imie: "Inga", nazwisko: "Cherek", stolik: "B", miejsce: "1" },
-      { imie: "Borys", nazwisko: "Wiekiera", stolik: "B", miejsce: "2" },
-      { imie: "Jerzy", nazwisko: "Strządała", stolik: "A", miejsce: "1" },
-      { imie: "Jan", nazwisko: "Samol", stolik: "B", miejsce: "3" },
-      { imie: "Witold", nazwisko: "Groborz", stolik: "D", miejsce: "1" },
-      { imie: "Anastazja", nazwisko: "Armata", stolik: "E", miejsce: "3" },
-      { imie: "Marika", nazwisko: "Cymbała", stolik: "A", miejsce: "2" },
-      { imie: "Konrad", nazwisko: "Boguta", stolik: "E", miejsce: "4" },
-      { imie: "Filip", nazwisko: "Lubera", stolik: "B", miejsce: "4" },
-      { imie: "Jędrzej", nazwisko: "Podsiadła", stolik: "D", miejsce: "2" },
-      { imie: "Anna Maria", nazwisko: "Grabczak", stolik: "C", miejsce: "2" },
-      { imie: "Tola", nazwisko: "Pielka", stolik: "C", miejsce: "3" },
-      { imie: "Wiktor", nazwisko: "Ciesiółka", stolik: "B", miejsce: "5" },
-      { imie: "Daniel", nazwisko: "Pudełek", stolik: "E", miejsce: "5" },
-      { imie: "Emil", nazwisko: "Machul", stolik: "B", miejsce: "6" },
-      { imie: "Anastazja", nazwisko: "Bernatowicz", stolik: "A", miejsce: "3" },
-      { imie: "Oskar", nazwisko: "Prucnal", stolik: "D", miejsce: "3" },
-      { imie: "Dawid", nazwisko: "Kobak", stolik: "E", miejsce: "6" },
-      { imie: "Arkadiusz", nazwisko: "Jenek", stolik: "D", miejsce: "4" },
-      { imie: "Wiktor", nazwisko: "Wojtoń", stolik: "D", miejsce: "5" },
-      { imie: "Miłosz", nazwisko: "Wiszowata", stolik: "E", miejsce: "7" },
-      { imie: "Maks", nazwisko: "Buczma", stolik: "B", miejsce: "7" },
-      { imie: "Maurycy", nazwisko: "Kozdra", stolik: "A", miejsce: "4" },
-      { imie: "Kamil", nazwisko: "Kiełbowicz", stolik: "B", miejsce: "8" },
-      { imie: "Melania", nazwisko: "Kozień", stolik: "E", miejsce: "8" },
-      { imie: "Jerzy", nazwisko: "Bajak", stolik: "C", miejsce: "4" },
-      { imie: "Marek", nazwisko: "Ratka", stolik: "E", miejsce: "9" },
-      { imie: "Liwia", nazwisko: "Nóżka", stolik: "A", miejsce: "5" },
-      { imie: "Łukasz", nazwisko: "Kubek", stolik: "A", miejsce: "6" },
-      { imie: "Sebastian", nazwisko: "Szymonik", stolik: "D", miejsce: "6" },
-      { imie: "Mieszko", nazwisko: "Berdzik", stolik: "B", miejsce: "9" },
-      { imie: "Urszula", nazwisko: "Czubaj", stolik: "C", miejsce: "5" },
-      { imie: "Ewelina", nazwisko: "Zubel", stolik: "A", miejsce: "7" },
-      { imie: "Iwo", nazwisko: "Wacławiak", stolik: "C", miejsce: "6" },
-      { imie: "Bruno", nazwisko: "Widuch", stolik: "A", miejsce: "8" },
-      { imie: "Alex", nazwisko: "Koral", stolik: "C", miejsce: "7" },
-      { imie: "Olga", nazwisko: "Radko", stolik: "B", miejsce: "10" },
-      { imie: "Rozalia", nazwisko: "Trawka", stolik: "B", miejsce: "11" },
-      { imie: "Janina", nazwisko: "Kubrak", stolik: "C", miejsce: "8" },
-      { imie: "Kajetan", nazwisko: "Furga", stolik: "D", miejsce: "7" },
-      { imie: "Anastazja", nazwisko: "Magier", stolik: "A", miejsce: "9" },
-      { imie: "Monika", nazwisko: "Wesoła", stolik: "E", miejsce: "10" },
-      { imie: "Cezary", nazwisko: "Bachanek", stolik: "D", miejsce: "8" },
-      { imie: "Juliusz", nazwisko: "Manista", stolik: "A", miejsce: "10" },
-      { imie: "Anna Maria", nazwisko: "Leśny", stolik: "B", miejsce: "12" },
-      { imie: "Kamil", nazwisko: "Stępak", stolik: "D", miejsce: "9" },
-      { imie: "Emil", nazwisko: "Prokopiak", stolik: "A", miejsce: "11" },
-      { imie: "Eliza", nazwisko: "Domżał", stolik: "C", miejsce: "9" },
-      { imie: "Jan", nazwisko: "Prokopiak", stolik: "A", miejsce: "12" },
-      { imie: "Jakub", nazwisko: "Wójt", stolik: "D", miejsce: "10" },
-      { imie: "Albert", nazwisko: "Stiller", stolik: "D", miejsce: "11" },
-      { imie: "Kazimierz", nazwisko: "Jantos", stolik: "B", miejsce: "13" },
-      { imie: "Franciszek", nazwisko: "Moneta", stolik: "E", miejsce: "11" },
-      { imie: "Stanisław", nazwisko: "Hajdasz", stolik: "C", miejsce: "10" },
-      { imie: "Aleks", nazwisko: "Święs", stolik: "A", miejsce: "13" },
-      { imie: "Fabian", nazwisko: "Ziniewicz", stolik: "C", miejsce: "11" },
-      { imie: "Adrianna", nazwisko: "Chyb", stolik: "D", miejsce: "12" },
-      { imie: "Mateusz", nazwisko: "Startek", stolik: "C", miejsce: "12" },
-      { imie: "Nicole", nazwisko: "Nowek", stolik: "B", miejsce: "14" },
-      { imie: "Adrian", nazwisko: "Pawlonka", stolik: "C", miejsce: "13" },
-      { imie: "Ada", nazwisko: "Wizner", stolik: "A", miejsce: "14" },
-      { imie: "Dominik", nazwisko: "Mol", stolik: "C", miejsce: "14" },
-      { imie: "Alan", nazwisko: "Buksa", stolik: "E", miejsce: "12" },
-      { imie: "Konstanty", nazwisko: "Nieścior", stolik: "D", miejsce: "13" },
-      { imie: "Franciszek", nazwisko: "Sankiewicz", stolik: "A", miejsce: "15" },
-      { imie: "Gaja", nazwisko: "Soczewka", stolik: "E", miejsce: "13" },
-      { imie: "Jan", nazwisko: "Startek", stolik: "D", miejsce: "14" },
-      { imie: "Norbert", nazwisko: "Miękina", stolik: "A", miejsce: "16" },
-      { imie: "Błażej", nazwisko: "Augustynek", stolik: "B", miejsce: "15" },
-      { imie: "Stefan", nazwisko: "Pasztaleniec", stolik: "C", miejsce: "15" },
-      { imie: "Maurycy", nazwisko: "Lesik", stolik: "B", miejsce: "16" },
-      { imie: "Eryk", nazwisko: "Langa", stolik: "A", miejsce: "17" },
-      { imie: "Karina", nazwisko: "Budkiewicz", stolik: "E", miejsce: "14" },
-      { imie: "Olaf", nazwisko: "Linkiewicz", stolik: "B", miejsce: "17" },
-      { imie: "Cyprian", nazwisko: "Deluga", stolik: "E", miejsce: "15" },
-      { imie: "Olaf", nazwisko: "Gregorowicz", stolik: "D", miejsce: "15" },
-      { imie: "Emil", nazwisko: "Matuszyk", stolik: "C", miejsce: "16" },
-      { imie: "Kornel", nazwisko: "Duczek", stolik: "B", miejsce: "18" },
-      { imie: "Ida", nazwisko: "Chwedoruk", stolik: "C", miejsce: "17" },
-      { imie: "Emil", nazwisko: "Fogel", stolik: "C", miejsce: "18" },
-      { imie: "Marcel", nazwisko: "Myszk", stolik: "A", miejsce: "18" },
-      { imie: "Anastazja", nazwisko: "Mycek", stolik: "E", miejsce: "16" },
-      { imie: "Konrad", nazwisko: "Wichłacz", stolik: "D", miejsce: "16" },
-      { imie: "Arkadiusz", nazwisko: "Osial", stolik: "E", miejsce: "17" },
-      { imie: "Kamila", nazwisko: "Lepak", stolik: "A", miejsce: "19" },
-      { imie: "Kamil", nazwisko: "Wosiak", stolik: "E", miejsce: "18" },
-      { imie: "Kamila", nazwisko: "Gołek", stolik: "E", miejsce: "19" },
-      { imie: "Dawid", nazwisko: "Mądrzak", stolik: "B", miejsce: "19" },
-      { imie: "Bartek", nazwisko: "Szymańczyk", stolik: "B", miejsce: "20" },
-      { imie: "Sonia", nazwisko: "Świerkot", stolik: "D", miejsce: "17" },
-      { imie: "Blanka", nazwisko: "Kulma", stolik: "C", miejsce: "19" },
-      { imie: "Mieszko", nazwisko: "Wojsław", stolik: "D", miejsce: "18" },
-      { imie: "Filip", nazwisko: "Zybura", stolik: "A", miejsce: "20" },
-      { imie: "Daniel", nazwisko: "Bekus", stolik: "D", miejsce: "19" },
-      { imie: "Justyna", nazwisko: "Karczmarek", stolik: "D", miejsce: "20" },
-      { imie: "Tymon", nazwisko: "Miszta", stolik: "E", miejsce: "20" },
-      { imie: "Igor", nazwisko: "Behrendt", stolik: "C", miejsce: "20" }
+      { imie: "Michał", nazwisko: "Kozłowski", stolik: "Młodzi", miejsce: "1", wyszukiwalny: true },
+      { imie: "Magdalena", nazwisko: "Kozłowska", stolik: "Młodzi", miejsce: "2", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "Młodzi", miejsce: "3", wyszukiwalny: false },
+      { imie: "Mateusz", nazwisko: "Garus", stolik: "Młodzi", miejsce: "4", wyszukiwalny: true },
+      { imie: "Izabela", nazwisko: "Fijołek", stolik: "Młodzi", miejsce: "5", wyszukiwalny: true },
+      { imie: "Piotr", nazwisko: "Fijłoek", stolik: "Młodzi", miejsce: "6", wyszukiwalny: true },
+      { imie: "Sylwia", nazwisko: "Grzelak", stolik: "Młodzi", miejsce: "7", wyszukiwalny: true },
+      { imie: "Arkadiusz", nazwisko: "Grzelak", stolik: "Młodzi", miejsce: "8", wyszukiwalny: true },
+      { imie: "Karolina", nazwisko: "Żuchowska", stolik: "Młodzi", miejsce: "9", wyszukiwalny: true },
+      { imie: "Piotr", nazwisko: "Żuchowski", stolik: "Młodzi", miejsce: "10", wyszukiwalny: true },
+      { imie: "Pan", nazwisko: "Młody", stolik: "Młodzi", miejsce: "11", wyszukiwalny: false },
+      { imie: "Panna", nazwisko: "Młoda", stolik: "Młodzi", miejsce: "12", wyszukiwalny: false },
+      { imie: "Patrycja", nazwisko: "Bartosiak", stolik: "Młodzi", miejsce: "13", wyszukiwalny: true },
+      { imie: "Kamil", nazwisko: "Szkupiński", stolik: "Młodzi", miejsce: "14", wyszukiwalny: true },
+      { imie: "Natalia", nazwisko: "Klimecka", stolik: "Młodzi", miejsce: "15", wyszukiwalny: true },
+      { imie: "Błażej", nazwisko: "Klimecki", stolik: "Młodzi", miejsce: "16", wyszukiwalny: true },
+      { imie: "Marzena", nazwisko: "Brzozek", stolik: "Młodzi", miejsce: "17", wyszukiwalny: true },
+      { imie: "Łukasz", nazwisko: "Brzozek", stolik: "Młodzi", miejsce: "18", wyszukiwalny: true },
+      { imie: "Dominika", nazwisko: "Olejniczak", stolik: "Młodzi", miejsce: "19", wyszukiwalny: true },
+      { imie: "Bartłomiej", nazwisko: "Olejniczak", stolik: "Młodzi", miejsce: "20", wyszukiwalny: true },
+      { imie: "Katarzyna", nazwisko: "Goździk", stolik: "Młodzi", miejsce: "21", wyszukiwalny: true },
+      { imie: "Arkadiusz", nazwisko: "Goździk", stolik: "Młodzi", miejsce: "22", wyszukiwalny: true },
+      { imie: "Marta", nazwisko: "Rajch", stolik: "1", miejsce: "1", wyszukiwalny: true },
+      { imie: "Krystian", nazwisko: "Rajch", stolik: "1", miejsce: "2", wyszukiwalny: true },
+      { imie: "Paulina", nazwisko: "Rajch", stolik: "1", miejsce: "3", wyszukiwalny: true },
+      { imie: "Damian", nazwisko: "Rajch", stolik: "1", miejsce: "4", wyszukiwalny: true },
+      { imie: "Agnieszka", nazwisko: "Dylik", stolik: "1", miejsce: "5", wyszukiwalny: true },
+      { imie: "Michał", nazwisko: "Dylik", stolik: "1", miejsce: "6", wyszukiwalny: true },
+      { imie: "Ewelina", nazwisko: "Stańczyk", stolik: "1", miejsce: "7", wyszukiwalny: true },
+      { imie: "Marika", nazwisko: "Stańczyk", stolik: "1", miejsce: "8", wyszukiwalny: true },
+      { imie: "Miłosz", nazwisko: "Stańczyk", stolik: "1", miejsce: "9", wyszukiwalny: true },
+      { imie: "Michał", nazwisko: "Stańczyk", stolik: "1", miejsce: "10", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "1", miejsce: "11", wyszukiwalny: false },
+      { imie: "Marcin", nazwisko: "Kępiński", stolik: "1", miejsce: "12", wyszukiwalny: true },
+      { imie: "Jakub", nazwisko: "Różalski", stolik: "1", miejsce: "13", wyszukiwalny: true },
+      { imie: "Daniel", nazwisko: "Osiecki", stolik: "1", miejsce: "14", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "1", miejsce: "15", wyszukiwalny: false },
+      { imie: "Kinga", nazwisko: "Kacela", stolik: "1", miejsce: "16", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "1", miejsce: "17", wyszukiwalny: false },
+      { imie: "Paulina", nazwisko: "Osiecka", stolik: "1", miejsce: "18", wyszukiwalny: true },
+      { imie: "Adrian", nazwisko: "Osiecki", stolik: "1", miejsce: "19", wyszukiwalny: true },
+      { imie: "Angelika", nazwisko: "Piłacik", stolik: "1", miejsce: "20", wyszukiwalny: true },
+      { imie: "Mateusz", nazwisko: "Morawski", stolik: "1", miejsce: "21", wyszukiwalny: true },
+      { imie: "Anna", nazwisko: "Jędrasiak", stolik: "1", miejsce: "22", wyszukiwalny: true },
+      { imie: "Marcin", nazwisko: "Jędrasiak", stolik: "1", miejsce: "23", wyszukiwalny: true },
+      { imie: "Julia", nazwisko: "Stańczyk", stolik: "1", miejsce: "24", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "1", miejsce: "25", wyszukiwalny: false },
+      { imie: "Maurycy", nazwisko: "Baranowski", stolik: "1", miejsce: "26", wyszukiwalny: true },
+      { imie: "Laura", nazwisko: "Baranowska", stolik: "1", miejsce: "27", wyszukiwalny: true },
+      { imie: "Emilia", nazwisko: "Baranowska", stolik: "1", miejsce: "28", wyszukiwalny: true },
+      { imie: "Tomek", nazwisko: "Smołaga", stolik: "1", miejsce: "29", wyszukiwalny: true },
+      { imie: "Sylwia", nazwisko: "Smołaga", stolik: "1", miejsce: "30", wyszukiwalny: true },
+      { imie: "Nikodem", nazwisko: "Smołaga", stolik: "1", miejsce: "31", wyszukiwalny: true },
+      { imie: "Katarzyna", nazwisko: "Różalska", stolik: "1", miejsce: "32", wyszukiwalny: true },
+      { imie: "Radosław", nazwisko: "Różalski", stolik: "1", miejsce: "33", wyszukiwalny: true },
+      { imie: "Magdalena", nazwisko: "Błaszczyk", stolik: "1", miejsce: "34", wyszukiwalny: true },
+      { imie: "Ola", nazwisko: "Błaszczyk", stolik: "1", miejsce: "35", wyszukiwalny: true },
+      { imie: "Małgosia", nazwisko: "Błaszczyk", stolik: "1", miejsce: "36", wyszukiwalny: true },
+      { imie: "Adam", nazwisko: "Błaszczyk", stolik: "1", miejsce: "37", wyszukiwalny: true },
+      { imie: "Damian", nazwisko: "Błaszczyk", stolik: "1", miejsce: "38", wyszukiwalny: true },
+      { imie: "Paulina", nazwisko: "Woźniak", stolik: "1", miejsce: "39", wyszukiwalny: true },
+      { imie: "Antek", nazwisko: "Woźniak", stolik: "1", miejsce: "40", wyszukiwalny: true },
+      { imie: "Grzegorz", nazwisko: "Woźniak", stolik: "1", miejsce: "41", wyszukiwalny: true },
+      { imie: "Zofia", nazwisko: "Janiak", stolik: "1", miejsce: "42", wyszukiwalny: true },
+      { imie: "Dominik", nazwisko: "Janiak", stolik: "1", miejsce: "43", wyszukiwalny: true },
+      { imie: "Bartłomiej", nazwisko: "Janiak", stolik: "1", miejsce: "44", wyszukiwalny: true },
+      { imie: "Justyna", nazwisko: "Bartosiak-Tomczak", stolik: "1", miejsce: "45", wyszukiwalny: true },
+      { imie: "Marcel", nazwisko: "Tomczak", stolik: "1", miejsce: "46", wyszukiwalny: true },
+      { imie: "Małgorzata", nazwisko: "Bartosiak", stolik: "1", miejsce: "47", wyszukiwalny: true },
+      { imie: "Michał", nazwisko: "Bartosiak", stolik: "1", miejsce: "48", wyszukiwalny: true },
+      { imie: "Martyna", nazwisko: "Szczechowicz", stolik: "1", miejsce: "49", wyszukiwalny: true },
+      { imie: "Maciej", nazwisko: "Szczechowicz", stolik: "1", miejsce: "50", wyszukiwalny: true },
+      { imie: "Arkadiusz", nazwisko: "Szkupiński", stolik: "2", miejsce: "1", wyszukiwalny: true },
+      { imie: "Wioletta", nazwisko: "Szkupińska", stolik: "2", miejsce: "2", wyszukiwalny: true },
+      { imie: "Janusz", nazwisko: "Bartosiak", stolik: "2", miejsce: "3", wyszukiwalny: true },
+      { imie: "Jolanta", nazwisko: "Bartosiak", stolik: "2", miejsce: "4", wyszukiwalny: true },
+      { imie: "Jarosław", nazwisko: "Zjawiony", stolik: "2", miejsce: "5", wyszukiwalny: true },
+      { imie: "Teresa", nazwisko: "Zjawiona", stolik: "2", miejsce: "6", wyszukiwalny: true },
+      { imie: "Roman", nazwisko: "Kasiński", stolik: "2", miejsce: "7", wyszukiwalny: true },
+      { imie: "Renata", nazwisko: "Kasińska", stolik: "2", miejsce: "8", wyszukiwalny: true },
+      { imie: "Marcin", nazwisko: "Więckowski", stolik: "2", miejsce: "9", wyszukiwalny: true },
+      { imie: "Sylwia", nazwisko: "Więckowska", stolik: "2", miejsce: "10", wyszukiwalny: true },
+      { imie: "Dariusz", nazwisko: "Kępiński", stolik: "2", miejsce: "11", wyszukiwalny: true },
+      { imie: "Marta", nazwisko: "Kępińska", stolik: "2", miejsce: "12", wyszukiwalny: true },
+      { imie: "Wiesław", nazwisko: "Kępiński", stolik: "2", miejsce: "13", wyszukiwalny: true },
+      { imie: "Zofia", nazwisko: "Kępińska", stolik: "2", miejsce: "14", wyszukiwalny: true },
+      { imie: "Henryk", nazwisko: "Różalski", stolik: "2", miejsce: "15", wyszukiwalny: true },
+      { imie: "Anna", nazwisko: "Różalska", stolik: "2", miejsce: "16", wyszukiwalny: true },
+      { imie: "Jarosław", nazwisko: "Kacela", stolik: "2", miejsce: "17", wyszukiwalny: true },
+      { imie: "Wiesława", nazwisko: "Kacela", stolik: "2", miejsce: "18", wyszukiwalny: true },
+      { imie: "Mirosław", nazwisko: "Osiecki", stolik: "2", miejsce: "19", wyszukiwalny: true },
+      { imie: "Marzena", nazwisko: "Osiecka", stolik: "2", miejsce: "20", wyszukiwalny: true },
+      { imie: "Wioletta", nazwisko: "Janiak", stolik: "2", miejsce: "21", wyszukiwalny: true },
+      { imie: "Włodzimierz", nazwisko: "Janiak", stolik: "2", miejsce: "22", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "2", miejsce: "23", wyszukiwalny: false },
+      { imie: "Anna", nazwisko: "Kotus", stolik: "2", miejsce: "24", wyszukiwalny: true },
+      { imie: "Paweł", nazwisko: "Rajch", stolik: "2", miejsce: "25", wyszukiwalny: true },
+      { imie: "Anna", nazwisko: "Rajch", stolik: "2", miejsce: "26", wyszukiwalny: true },
+      { imie: "Andrzej", nazwisko: "Stańczyk", stolik: "2", miejsce: "27", wyszukiwalny: true },
+      { imie: "Bożena", nazwisko: "Stańczyk", stolik: "2", miejsce: "28", wyszukiwalny: true },
+      { imie: "Zbigniew", nazwisko: "Stańczyk", stolik: "2", miejsce: "29", wyszukiwalny: true },
+      { imie: "Elżbieta", nazwisko: "Stańczyk", stolik: "2", miejsce: "30", wyszukiwalny: true },
+      { imie: "Tomasz", nazwisko: "Kopera", stolik: "2", miejsce: "31", wyszukiwalny: true },
+      { imie: "Agnieszka", nazwisko: "Kopera", stolik: "2", miejsce: "32", wyszukiwalny: true },
+      { imie: "Krzysztof", nazwisko: "Błaszczyk", stolik: "2", miejsce: "33", wyszukiwalny: true },
+      { imie: "Renata", nazwisko: "Błaszczyk", stolik: "2", miejsce: "34", wyszukiwalny: true },
+      { imie: "Wojciech", nazwisko: "Koziarski", stolik: "2", miejsce: "35", wyszukiwalny: true },
+      { imie: "Beata", nazwisko: "Karolak", stolik: "2", miejsce: "36", wyszukiwalny: true },
+      { imie: "Teresa", nazwisko: "Bartosiak", stolik: "2", miejsce: "37", wyszukiwalny: true },
+      { imie: "Ryszard", nazwisko: "Morawski", stolik: "2", miejsce: "38", wyszukiwalny: true },
+      { imie: "Jolanta", nazwisko: "Morawska", stolik: "2", miejsce: "39", wyszukiwalny: true },
+      { imie: "Mariusz", nazwisko: "Walczak", stolik: "2", miejsce: "40", wyszukiwalny: true },
+      { imie: "Sylwia", nazwisko: "Walczak", stolik: "2", miejsce: "41", wyszukiwalny: true },
+      { imie: "Piotr", nazwisko: "Bartosiak", stolik: "2", miejsce: "42", wyszukiwalny: true },
+      { imie: "Elżbieta", nazwisko: "Bartosiak", stolik: "2", miejsce: "43", wyszukiwalny: true },
+      { imie: "Andrzej", nazwisko: "Adamiak", stolik: "2", miejsce: "44", wyszukiwalny: true },
+      { imie: "Joanna", nazwisko: "Adamiak", stolik: "2", miejsce: "45", wyszukiwalny: true },
+      { imie: "Dawid", nazwisko: "Kotliński", stolik: "3", miejsce: "1", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "2", wyszukiwalny: false },
+      { imie: "Sylwester", nazwisko: "Weselak", stolik: "3", miejsce: "3", wyszukiwalny: true },
+      { imie: "Patrycja", nazwisko: "Weselak", stolik: "3", miejsce: "4", wyszukiwalny: true },
+      { imie: "Miłosz", nazwisko: "Kowalewski", stolik: "3", miejsce: "5", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "6", wyszukiwalny: false },
+      { imie: "Błażej", nazwisko: "Kowalewski", stolik: "3", miejsce: "7", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "3", miejsce: "8", wyszukiwalny: false },
+      { imie: "Daniel", nazwisko: "Kowalewski", stolik: "3", miejsce: "9", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "3", miejsce: "10", wyszukiwalny: false },
+      { imie: "Katarzyna", nazwisko: "Filipczak", stolik: "3", miejsce: "11", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "3", miejsce: "12", wyszukiwalny: false },
+      { imie: "Maria", nazwisko: "Pawłowska", stolik: "3", miejsce: "13", wyszukiwalny: true },
+      { imie: "Michał", nazwisko: "Pawłowski", stolik: "3", miejsce: "14", wyszukiwalny: true },
+      { imie: "Karolina", nazwisko: "Zych", stolik: "3", miejsce: "15", wyszukiwalny: true },
+      { imie: "Dominik", nazwisko: "Zych", stolik: "3", miejsce: "16", wyszukiwalny: true },
+      { imie: "Paweł", nazwisko: "Śmigielski", stolik: "3", miejsce: "17", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "18", wyszukiwalny: false },
+      { imie: "Łukasz", nazwisko: "Adamczyk", stolik: "3", miejsce: "19", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "20", wyszukiwalny: false },
+      { imie: "Łukasz", nazwisko: "Pacholczyk", stolik: "3", miejsce: "21", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "22", wyszukiwalny: false },
+      { imie: "Bartosz", nazwisko: "Sobczak", stolik: "3", miejsce: "23", wyszukiwalny: true },
+      { imie: "Adrianna", nazwisko: "Kotlińska", stolik: "3", miejsce: "24", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "25", wyszukiwalny: false },
+      { imie: "Jakub", nazwisko: "Kotliński", stolik: "3", miejsce: "26", wyszukiwalny: true },
+      { imie: "Kamil", nazwisko: "Krucz", stolik: "3", miejsce: "27", wyszukiwalny: true },
+      { imie: "Rafał", nazwisko: "Włodarczyk", stolik: "3", miejsce: "28", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "29", wyszukiwalny: false },
+      { imie: "Mariusz", nazwisko: "Filipczak", stolik: "3", miejsce: "30", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "31", wyszukiwalny: false },
+      { imie: "Marcin", nazwisko: "Filipczak", stolik: "3", miejsce: "32", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "33", wyszukiwalny: false },
+      { imie: "Krzysztof", nazwisko: "Wiśniewski", stolik: "3", miejsce: "34", wyszukiwalny: true },
+      { imie: "Aleksandra", nazwisko: "Zych", stolik: "3", miejsce: "35", wyszukiwalny: true },
+      { imie: "Łukasz", nazwisko: "Zych", stolik: "3", miejsce: "36", wyszukiwalny: true },
+      { imie: "Zuzanna", nazwisko: "Bartczak", stolik: "3", miejsce: "37", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "3", miejsce: "38", wyszukiwalny: false },
+      { imie: "Kamil", nazwisko: "Frątczak", stolik: "4", miejsce: "1", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "4", miejsce: "2", wyszukiwalny: false },
+      { imie: "Przemysław", nazwisko: "Siem", stolik: "4", miejsce: "3", wyszukiwalny: true },
+      { imie: "Barbara", nazwisko: "Broda-", stolik: "4", miejsce: "4", wyszukiwalny: true },
+      { imie: "Katarzyna", nazwisko: "Kaźmierczak", stolik: "4", miejsce: "5", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "4", miejsce: "6", wyszukiwalny: false },
+      { imie: "Anna", nazwisko: "Matusiak", stolik: "4", miejsce: "7", wyszukiwalny: true },
+      { imie: "Mariusz", nazwisko: "Matusiak", stolik: "4", miejsce: "8", wyszukiwalny: true },
+      { imie: "Anna", nazwisko: "Augustyniak", stolik: "4", miejsce: "9", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "4", miejsce: "10", wyszukiwalny: false },
+      { imie: "Ewelina", nazwisko: "Nowak", stolik: "4", miejsce: "11", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "4", miejsce: "12", wyszukiwalny: false },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "4", miejsce: "13", wyszukiwalny: false },
+      { imie: "Mariusz", nazwisko: "Pietrzak", stolik: "4", miejsce: "14", wyszukiwalny: true },
+      { imie: "Agata", nazwisko: "Baranowska", stolik: "4", miejsce: "15", wyszukiwalny: true },
+      { imie: "Krystian", nazwisko: "Baranowski", stolik: "4", miejsce: "16", wyszukiwalny: true },
+      { imie: "Delfina", nazwisko: "Kubiak", stolik: "4", miejsce: "17", wyszukiwalny: true },
+      { imie: "Radosław", nazwisko: "Kubiak", stolik: "4", miejsce: "18", wyszukiwalny: true },
+      { imie: "Halina", nazwisko: "Bartnicka", stolik: "4", miejsce: "19", wyszukiwalny: true },
+      { imie: "Stefan", nazwisko: "Bartnicki", stolik: "4", miejsce: "20", wyszukiwalny: true },
+      { imie: "Marcin", nazwisko: "Gibała", stolik: "4", miejsce: "21", wyszukiwalny: true },
+      { imie: "Magdalena", nazwisko: "Gibała", stolik: "4", miejsce: "22", wyszukiwalny: true },
+      { imie: "Jarosław", nazwisko: "Jung", stolik: "4", miejsce: "23", wyszukiwalny: true },
+      { imie: "Magdalena", nazwisko: "Jung", stolik: "4", miejsce: "24", wyszukiwalny: true },
+      { imie: "Arkadiusz", nazwisko: "Ręcicki", stolik: "4", miejsce: "25", wyszukiwalny: true },
+      { imie: "Ewa", nazwisko: "Ręcicka", stolik: "4", miejsce: "26", wyszukiwalny: true },
+      { imie: "Andrzej", nazwisko: "Wróbel", stolik: "4", miejsce: "27", wyszukiwalny: true },
+      { imie: "Małgorzata", nazwisko: "Koperska", stolik: "4", miejsce: "28", wyszukiwalny: true },
+      { imie: "Elżbieta", nazwisko: "Fijałkowska", stolik: "4", miejsce: "29", wyszukiwalny: true },
+      { imie: "Grzegorz", nazwisko: "Fijałkowski", stolik: "4", miejsce: "30", wyszukiwalny: true },
+      { imie: "Tomasz", nazwisko: "Bulski", stolik: "4", miejsce: "31", wyszukiwalny: true },
+      { imie: "Agnieszka", nazwisko: "Bulska", stolik: "4", miejsce: "32", wyszukiwalny: true },
+      { imie: "Karol", nazwisko: "Trzaskowski", stolik: "4", miejsce: "33", wyszukiwalny: true },
+      { imie: "Anna", nazwisko: "Trzaskowska", stolik: "4", miejsce: "34", wyszukiwalny: true },
+      { imie: "Ireneusz", nazwisko: "Kowalewski", stolik: "4", miejsce: "35", wyszukiwalny: true },
+      { imie: "Renata", nazwisko: "Kowalewska", stolik: "4", miejsce: "36", wyszukiwalny: true },
+      { imie: "Jacek", nazwisko: "Wiśniewski", stolik: "4", miejsce: "37", wyszukiwalny: true },
+      { imie: "Zofia", nazwisko: "Wiśniewska", stolik: "4", miejsce: "38", wyszukiwalny: true },
+      { imie: "Stanisław", nazwisko: "Filipczak", stolik: "4", miejsce: "39", wyszukiwalny: true },
+      { imie: "Grażyna", nazwisko: "Filipczak", stolik: "4", miejsce: "40", wyszukiwalny: true },
+      { imie: "Magdalena", nazwisko: "Włodarczyk", stolik: "5", miejsce: "1", wyszukiwalny: true },
+      { imie: "Grzegorz", nazwisko: "Włodarczyk", stolik: "5", miejsce: "2", wyszukiwalny: true },
+      { imie: "Wioletta", nazwisko: "Włodarczyk", stolik: "5", miejsce: "3", wyszukiwalny: true },
+      { imie: "Marek", nazwisko: "Włodarczyk", stolik: "5", miejsce: "4", wyszukiwalny: true },
+      { imie: "Katarzyna", nazwisko: "Włodarczyk", stolik: "5", miejsce: "5", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "5", miejsce: "6", wyszukiwalny: false },
+      { imie: "Anna", nazwisko: "Lichy", stolik: "5", miejsce: "7", wyszukiwalny: true },
+      { imie: "Maria", nazwisko: "Repeć", stolik: "5", miejsce: "8", wyszukiwalny: true },
+      { imie: "Tadeusz", nazwisko: "Repeć", stolik: "5", miejsce: "9", wyszukiwalny: true },
+      { imie: "Krzysztof", nazwisko: "Włodarczyk", stolik: "5", miejsce: "10", wyszukiwalny: true },
+      { imie: "Marzena", nazwisko: "Włodarczyk", stolik: "5", miejsce: "11", wyszukiwalny: true },
+      { imie: "Aleksandra", nazwisko: "Włodarczyk", stolik: "5", miejsce: "12", wyszukiwalny: true },
+      { imie: "Mateusz", nazwisko: "Kilian", stolik: "5", miejsce: "13", wyszukiwalny: true },
+      { imie: "Arkadiusz", nazwisko: "Krucz", stolik: "5", miejsce: "14", wyszukiwalny: true },
+      { imie: "Anna", nazwisko: "Krucz", stolik: "5", miejsce: "15", wyszukiwalny: true },
+      { imie: "Beata", nazwisko: "Kotlińska", stolik: "5", miejsce: "16", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "5", miejsce: "17", wyszukiwalny: false },
+      { imie: "Damian", nazwisko: "Kotliński", stolik: "5", miejsce: "18", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "5", miejsce: "19", wyszukiwalny: false },
+      { imie: "Monika", nazwisko: "Kotlińska", stolik: "5", miejsce: "20", wyszukiwalny: true },
+      { imie: "Robert", nazwisko: "Kotliński", stolik: "5", miejsce: "21", wyszukiwalny: true },
+      { imie: "Jacek", nazwisko: "Gładki", stolik: "5", miejsce: "22", wyszukiwalny: true },
+      { imie: "Kinga", nazwisko: "Gładki", stolik: "5", miejsce: "23", wyszukiwalny: true },
+      { imie: "Lidia", nazwisko: "Pietrzak", stolik: "5", miejsce: "24", wyszukiwalny: true },
+      { imie: "Osoba", nazwisko: "towarzysząca", stolik: "5", miejsce: "25", wyszukiwalny: false },
+      { imie: "Magdalena", nazwisko: "Kwaśnik", stolik: "5", miejsce: "26", wyszukiwalny: true },
+      { imie: "Robert", nazwisko: "Kwaśnik", stolik: "5", miejsce: "27", wyszukiwalny: true },
+      { imie: "Halina", nazwisko: "Kartasińska", stolik: "5", miejsce: "28", wyszukiwalny: true },
+      { imie: "Bogdan", nazwisko: "Kartasiński", stolik: "5", miejsce: "29", wyszukiwalny: true },
+      { imie: "Dorota", nazwisko: "Włodarczyk", stolik: "5", miejsce: "30", wyszukiwalny: true },
+      { imie: "Jarosław", nazwisko: "Włodarczyk", stolik: "5", miejsce: "31", wyszukiwalny: true },
+      { imie: "Krystyna", nazwisko: "Lubelska", stolik: "5", miejsce: "32", wyszukiwalny: true },
+      { imie: "Helena", nazwisko: "Włodarczyk", stolik: "5", miejsce: "33", wyszukiwalny: true },
+      { imie: "Jacek", nazwisko: "Śmigielski", stolik: "5", miejsce: "34", wyszukiwalny: true },
+      { imie: "Beata", nazwisko: "Śmigielska", stolik: "5", miejsce: "35", wyszukiwalny: true },
+      { imie: "Zofia", nazwisko: "Rybus", stolik: "5", miejsce: "36", wyszukiwalny: true },
+      { imie: "Mama", nazwisko: "Pana", stolik: "5", miejsce: "37", wyszukiwalny: true },
+      { imie: "Tata", nazwisko: "Pana", stolik: "5", miejsce: "38", wyszukiwalny: true },
+      { imie: "Kazimiera", nazwisko: "Tyrko", stolik: "5", miejsce: "39", wyszukiwalny: true },
+      { imie: "Jan", nazwisko: "Tyrko", stolik: "5", miejsce: "40", wyszukiwalny: true },
+      { imie: "Paulina", nazwisko: "Tyrko", stolik: "5", miejsce: "41", wyszukiwalny: true },
+      { imie: "Adrian", nazwisko: "Biały", stolik: "5", miejsce: "42", wyszukiwalny: true },
+      { imie: "Karol", nazwisko: "Rybus", stolik: "5", miejsce: "43", wyszukiwalny: true },
+      { imie: "Weronika", nazwisko: "Rybus", stolik: "5", miejsce: "44", wyszukiwalny: true },
+      { imie: "Jan", nazwisko: "Rybus", stolik: "5", miejsce: "45", wyszukiwalny: true },
+      { imie: "Agata", nazwisko: "Rybus", stolik: "5", miejsce: "46", wyszukiwalny: true },
+      { imie: "Sławomir", nazwisko: "Rybus", stolik: "5", miejsce: "47", wyszukiwalny: true },
+      { imie: "Maryla", nazwisko: "Rybus", stolik: "5", miejsce: "48", wyszukiwalny: true },
+      { imie: "Agnieszka", nazwisko: "Bartczak", stolik: "5", miejsce: "49", wyszukiwalny: true },
+      { imie: "Łukasz", nazwisko: "Bartczak", stolik: "5", miejsce: "50", wyszukiwalny: true }
     ];
+    const SEATS = {"1":50,"2":45,"3":38,"4":40,"5":50,"Młodzi":22};
 
-    function findGuest() {
-      const input = document.getElementById("search").value.toLowerCase().trim();
-      const resultDiv = document.getElementById("result");
+    const tablesEl = document.getElementById("tables");
+    const brideWrap = document.getElementById("brideWrap");
+    const brideSeats = document.getElementById("brideSeats");
+    const brideRect = document.getElementById("brideRect");
 
-      const guest = guests.find(g => 
-        (`${g.imie} ${g.nazwisko}`.toLowerCase() === input)
-      );
+    function createHorizontalTable(id) {
+      const n = SEATS[id];
+      const topCount = Math.floor(n/2);
+      const bottomCount = n - topCount;
 
-      if (guest) {
-        resultDiv.textContent = `Dziś siedzisz przy stoliku ${guest.stolik} na miejscu ${guest.miejsce}.`;
-      } else {
-        resultDiv.textContent = "Nie znaleziono takiego nazwiska. Sprawdź pisownię.";
+      const block = document.createElement("div");
+      block.className = "table-block";
+      block.dataset.table = id;
+
+      const top = document.createElement("div");
+      top.className = "seats-row top";
+      top.style.gridTemplateColumns = `repeat(${topCount}, 1fr)`;
+
+      for (let i=0;i<topCount;i++) {
+        const idx = i+1;
+        const s = document.createElement("button");
+        s.type = "button";
+        s.className = "seat";
+        s.dataset.seat = idx;
+        s.textContent = idx;
+        s.title = `Stół ${id}, miejsce ${idx}`;
+        top.prepend(s);
+      }
+
+      const rect = document.createElement("div");
+      rect.className = "table-rect";
+      rect.innerHTML = `<span class="label">Stół ${id}</span>`;
+
+      const bottom = document.createElement("div");
+      bottom.className = "seats-row bottom";
+      bottom.style.gridTemplateColumns = `repeat(${bottomCount}, 1fr)`;
+
+      for (let i=0;i<bottomCount;i++) {
+        const idx = topCount + i + 1;
+        const s = document.createElement("button");
+        s.type = "button";
+        s.className = "seat";
+        s.dataset.seat = idx;
+        s.textContent = idx;
+        s.title = `Stół ${id}, miejsce ${idx}`;
+        bottom.prepend(s);
+      }
+
+      block.appendChild(top);
+      block.appendChild(rect);
+      block.appendChild(bottom);
+
+      rect.addEventListener("click", clearHighlights);
+
+      tablesEl.appendChild(block);
+    }
+
+    function createBrideTable() {
+      const n = SEATS["Młodzi"];
+      brideSeats.innerHTML = "";
+      for (let i=1;i<=n;i++) {
+        const s = document.createElement("button");
+        s.type = "button";
+        s.className = "seat";
+        s.dataset.seat = i;
+        s.textContent = i;
+        s.title = `Stół Młodych, miejsce ${i}`;
+        brideSeats.appendChild(s);
       }
     }
+
+    function fitBrideHeightToSeats() {
+      const n = SEATS["Młodzi"];
+      if (!n) return;
+      // Pobierz wymiary krzesełka i przerw
+      const sampleSeat = document.querySelector('.bride-seats .seat') || document.querySelector('.seat');
+      if (!sampleSeat) return;
+      const seatStyles = window.getComputedStyle(sampleSeat);
+      const seatH = parseFloat(seatStyles.height);
+      const gap = parseFloat(window.getComputedStyle(brideSeats).gap) || 10;
+      const padding = 20; // mały margines
+      const total = n * seatH + (n - 1) * gap + padding;
+      brideRect.style.height = total + 'px';
+    }
+
+    // Render
+    ["1","2","3","4","5"].forEach(createHorizontalTable);
+    createBrideTable();
+
+    // Wycentruj stół Młodych względem stołu 3 i dopasuj wysokość
+    function positionBride() {
+      const t3 = document.querySelector('.table-block[data-table="3"]');
+      if (t3) {
+        const wrapRect = tablesEl.getBoundingClientRect();
+        const t3Rect = t3.getBoundingClientRect();
+        const brideRectBox = brideWrap.getBoundingClientRect();
+        const t3Center = (t3Rect.top + t3Rect.bottom) / 2;
+        const topInWrap = t3Center - wrapRect.top - (brideRectBox.height / 2);
+        brideWrap.style.top = Math.max(0, topInWrap) + "px";
+      }
+    }
+
+    window.requestAnimationFrame(() => {
+      fitBrideHeightToSeats();
+      positionBride();
+    });
+
+    window.addEventListener('resize', () => {
+      fitBrideHeightToSeats();
+      positionBride();
+    });
+
+    // Wyszukiwanie
+    function normalizePl(txt) {
+      return (txt || "").toString().toLowerCase()
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .trim();
+    }
+    function clearHighlights() {
+      document.querySelectorAll(".seat.you").forEach(el => el.classList.remove("you"));
+      document.querySelectorAll(".table-rect.active").forEach(el => el.classList.remove("active"));
+    }
+    function findGuest() {
+      const input = document.getElementById("search").value;
+      const needle = normalizePl(input);
+      const person = guests.find(g => g.wyszukiwalny && normalizePl(g.imie + " " + g.nazwisko) === needle);
+      clearHighlights();
+
+      if (!person) {
+        alert("Nie znaleziono takiej osoby. Sprawdź pisownię.");
+        return;
+      }
+
+      const tableId = (person.stolik || "").toString().trim();
+      const seatNum = parseInt(person.miejsce, 10);
+
+      if (tableId === "Młodzi") {
+        const seatEl = brideSeats.querySelector(`.seat[data-seat="${seatNum}"]`);
+        if (seatEl) seatEl.classList.add("you");
+        document.getElementById("brideWrap").scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
+      const block = document.querySelector(`.table-block[data-table="${tableId}"]`);
+      if (block) {
+        block.querySelector(".table-rect")?.classList.add("active");
+        const seatEl = block.querySelector(`.seat[data-seat="${seatNum}"]`);
+        if (seatEl) seatEl.classList.add("you");
+        (seatEl || block).scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    document.getElementById("btn").addEventListener("click", findGuest);
+    document.getElementById("search").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") findGuest();
+    });
   </script>
 </body>
 </html>
