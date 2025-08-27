@@ -17,8 +17,8 @@
       --gold: #ffd700;
 
       --tables-width: 1100px;  /* stała szerokość stołów */
-      --bride-gap: 220px;      /* stały bufor po prawej */
-      --floor-shift: -56px;    /* stały offset parkietu w lewo */
+      --bride-gap: 200px;      /* stały bufor po prawej */
+      --floor-shift: -120px;    /* stały offset parkietu w lewo */
     }
     * { box-sizing: border-box; }
     html, body { height: 130%; }
@@ -69,7 +69,7 @@
       margin: 0 auto;
       padding: 8px 20px 30px;
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 200px 1fr;
       gap: 24px;
     }
 
@@ -85,6 +85,8 @@
       height: 100%;
       min-height: 520px;
       transform: translateX(var(--floor-shift));
+    
+      width: 180px;
     }
     .floor span {
       font-family: Georgia, serif;
@@ -103,7 +105,7 @@
     .tables {
       display: flex;
       flex-direction: column;
-      gap: 28px;
+      gap: 48px;
     }
     .table-block {
       display: grid;
@@ -192,7 +194,13 @@
       align-items: start;
       justify-items: start;
     }
-  </style>
+  
+/* Pokazuj mapę dopiero po wyszukaniu */
+.layout.hidden { display: none !important; }
+.layout.revealed { animation: fadeIn .35s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+</style>
 </head>
 <body>
   <header>
@@ -202,9 +210,10 @@
       <input id="search" type="text" placeholder="Wpisz swoje imię i nazwisko" />
       <button id="btn">Szukaj</button>
     </div>
+    <div id="result" style="margin-top:10px;font-weight:600;color:#5a4637;"></div>
   </header>
 
-  <section class="layout">
+  <section class="layout hidden">
     <aside class="floor" aria-label="Parkiet">
       <span>Parkiet</span>
     </aside>
@@ -223,8 +232,8 @@
 
   <script>
     const guests = [
-      { imie: "Michał", nazwisko: "Kozłowski", stolik: "Młodzi", miejsce: "1", wyszukiwalny: true },
-      { imie: "Magdalena", nazwisko: "Kozłowska", stolik: "Młodzi", miejsce: "2", wyszukiwalny: true },
+      { imie: "Magdalena", nazwisko: "Kozłowski", stolik: "Młodzi", miejsce: "1", wyszukiwalny: true },
+      { imie: "Michał", nazwisko: "Kozłowska", stolik: "Młodzi", miejsce: "2", wyszukiwalny: true },
       { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "Młodzi", miejsce: "3", wyszukiwalny: false },
       { imie: "Mateusz", nazwisko: "Garus", stolik: "Młodzi", miejsce: "4", wyszukiwalny: true },
       { imie: "Izabela", nazwisko: "Fijołek", stolik: "Młodzi", miejsce: "5", wyszukiwalny: true },
@@ -381,7 +390,7 @@
       { imie: "Kamil", nazwisko: "Frątczak", stolik: "4", miejsce: "1", wyszukiwalny: true },
       { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "4", miejsce: "2", wyszukiwalny: false },
       { imie: "Przemysław", nazwisko: "Siem", stolik: "4", miejsce: "3", wyszukiwalny: true },
-      { imie: "Barbara", nazwisko: "Broda-", stolik: "4", miejsce: "4", wyszukiwalny: true },
+      { imie: "Barbara", nazwisko: "Broda-Siem", stolik: "4", miejsce: "4", wyszukiwalny: true },
       { imie: "Katarzyna", nazwisko: "Kaźmierczak", stolik: "4", miejsce: "5", wyszukiwalny: true },
       { imie: "Osoba", nazwisko: "towarzysząca", stolik: "4", miejsce: "6", wyszukiwalny: false },
       { imie: "Anna", nazwisko: "Matusiak", stolik: "4", miejsce: "7", wyszukiwalny: true },
@@ -606,8 +615,23 @@
         return;
       }
 
+
+      // Pokaż mapę stołów dopiero po udanym wyszukaniu
+      const layoutEl = document.querySelector('.layout');
+      if (layoutEl && layoutEl.classList.contains('hidden')) {
+        layoutEl.classList.remove('hidden');
+        layoutEl.classList.add('revealed');
+      }
+
       const tableId = (person.stolik || "").toString().trim();
       const seatNum = parseInt(person.miejsce, 10);
+
+      // Wyświetl komunikat o znalezionym miejscu
+      const resultBox = document.getElementById("result");
+      if (resultBox) {
+        resultBox.textContent = `Twoje miejsce jest przy: Stole ${tableId}, miejsce ${seatNum}`;
+      }
+
 
       if (tableId === "Młodzi") {
         const seatEl = brideSeats.querySelector(`.seat[data-seat="${seatNum}"]`);
