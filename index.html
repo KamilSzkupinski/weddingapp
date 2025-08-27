@@ -3,6 +3,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
+  <!-- Zachowujemy pinch-zoom, ale bez osobnych styli mobilnych -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wesele Darii & Daniela – Interaktywna mapa stołów</title>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -15,11 +16,12 @@
       --accent-strong: #8c7b75;
       --gold: #ffd700;
 
-      --tables-width: 1080px;
-      --bride-gap: 220px;
-      --floor-shift: -56px;
+      --tables-width: 1100px;  /* stała szerokość stołów */
+      --bride-gap: 220px;      /* stały bufor po prawej */
+      --floor-shift: -56px;    /* stały offset parkietu w lewo */
     }
     * { box-sizing: border-box; }
+    html, body { height: 130%; }
     body {
       margin: 0;
       background: linear-gradient(to bottom, var(--bg1), var(--bg2));
@@ -48,7 +50,7 @@
       padding: 12px 14px;
       border: 1px solid #d6c8bf;
       border-radius: 10px;
-      min-width: 280px;
+      min-width: 320px;
       font-size: 16px;
       background: #fff;
     }
@@ -71,6 +73,7 @@
       gap: 24px;
     }
 
+    /* Parkiet po lewej – stały wygląd */
     .floor {
       background: #d2bda9;
       border-radius: 16px;
@@ -90,6 +93,7 @@
       letter-spacing: .5px;
     }
 
+    /* Kolumna stołów + stół Młodych po prawej */
     .tables-wrap {
       position: relative;
       padding-right: var(--bride-gap);
@@ -154,6 +158,7 @@
       font-weight: 700;
     }
 
+    /* Stół Młodych po prawej – stały, bez wariantów mobilnych */
     .bride-wrap {
       position: absolute;
       right: 0;
@@ -165,7 +170,8 @@
     }
     .bride-rect {
       width: 68px;
-      /* height będzie ustawiona dynamicznie w JS */
+	  height: 1090px;
+      /* wysokość ustawiana dynamicznie w JS tak, aby każde miejsce było przy stole */
       background: #fff7cc;
       border: 2px solid var(--accent-strong);
       border-radius: 12px;
@@ -186,18 +192,6 @@
       align-items: start;
       justify-items: start;
     }
-
-    @media (max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-      .tables-wrap {
-        padding-right: 16px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .floor { position: relative; transform: translateX(0); min-height: 200px; }
-      .seat { width: 40px; height: 40px; font-size: 14px; }
-      .table-rect { height: 72px; }
-    }
   </style>
 </head>
 <body>
@@ -215,7 +209,7 @@
       <span>Parkiet</span>
     </aside>
 
-  <main class="tables-wrap">
+    <main class="tables-wrap">
       <div class="tables" id="tables"></div>
 
       <div class="bride-wrap" id="brideWrap" aria-label="Stół Młodych">
@@ -234,7 +228,7 @@
       { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "Młodzi", miejsce: "3", wyszukiwalny: false },
       { imie: "Mateusz", nazwisko: "Garus", stolik: "Młodzi", miejsce: "4", wyszukiwalny: true },
       { imie: "Izabela", nazwisko: "Fijołek", stolik: "Młodzi", miejsce: "5", wyszukiwalny: true },
-      { imie: "Piotr", nazwisko: "Fijłoek", stolik: "Młodzi", miejsce: "6", wyszukiwalny: true },
+      { imie: "Piotr", nazwisko: "Fijałoek", stolik: "Młodzi", miejsce: "6", wyszukiwalny: true },
       { imie: "Sylwia", nazwisko: "Grzelak", stolik: "Młodzi", miejsce: "7", wyszukiwalny: true },
       { imie: "Arkadiusz", nazwisko: "Grzelak", stolik: "Młodzi", miejsce: "8", wyszukiwalny: true },
       { imie: "Karolina", nazwisko: "Żuchowska", stolik: "Młodzi", miejsce: "9", wyszukiwalny: true },
@@ -475,6 +469,7 @@
       { imie: "Agnieszka", nazwisko: "Bartczak", stolik: "5", miejsce: "49", wyszukiwalny: true },
       { imie: "Łukasz", nazwisko: "Bartczak", stolik: "5", miejsce: "50", wyszukiwalny: true }
     ];
+
     const SEATS = {"1":50,"2":45,"3":38,"4":40,"5":50,"Młodzi":22};
 
     const tablesEl = document.getElementById("tables");
@@ -495,6 +490,7 @@
       top.className = "seats-row top";
       top.style.gridTemplateColumns = `repeat(${topCount}, 1fr)`;
 
+      // górny rząd 1..topCount od PRAWEJ do LEWEJ
       for (let i=0;i<topCount;i++) {
         const idx = i+1;
         const s = document.createElement("button");
@@ -514,6 +510,7 @@
       bottom.className = "seats-row bottom";
       bottom.style.gridTemplateColumns = `repeat(${bottomCount}, 1fr)`;
 
+      // dolny rząd topCount+1..n od PRAWEJ do LEWEJ
       for (let i=0;i<bottomCount;i++) {
         const idx = topCount + i + 1;
         const s = document.createElement("button");
@@ -548,25 +545,24 @@
       }
     }
 
-    function fitBrideHeightToSeats() {
-      const n = SEATS["Młodzi"];
-      if (!n) return;
-      // Pobierz wymiary krzesełka i przerw
-      const sampleSeat = document.querySelector('.bride-seats .seat') || document.querySelector('.seat');
-      if (!sampleSeat) return;
-      const seatStyles = window.getComputedStyle(sampleSeat);
-      const seatH = parseFloat(seatStyles.height);
-      const gap = parseFloat(window.getComputedStyle(brideSeats).gap) || 10;
-      const padding = 20; // mały margines
-      const total = n * seatH + (n - 1) * gap + padding;
-      brideRect.style.height = total + 'px';
-    }
+  //  function fitBrideHeightToSeats() {
+    //  const n = SEATS["Młodzi"];
+    //  if (!n) return;
+    //  const sampleSeat = document.querySelector('.bride-seats .seat') || document.querySelector('.seat');
+    //  if (!sampleSeat) return;
+    //  const seatStyles = window.getComputedStyle(sampleSeat);
+    //  const seatH = parseFloat(seatStyles.height);
+    //  const gap = parseFloat(window.getComputedStyle(brideSeats).gap) || 10;
+    //  const padding = 20; // mały margines
+    //  const total = n * seatH + (n - 1) * gap + padding;
+    //  brideRect.style.height = total + 'px';
+    //}
 
     // Render
     ["1","2","3","4","5"].forEach(createHorizontalTable);
     createBrideTable();
 
-    // Wycentruj stół Młodych względem stołu 3 i dopasuj wysokość
+    // Wycentruj stół Młodych względem stołu 3 + dopasuj wysokość
     function positionBride() {
       const t3 = document.querySelector('.table-block[data-table="3"]');
       if (t3) {
@@ -583,7 +579,6 @@
       fitBrideHeightToSeats();
       positionBride();
     });
-
     window.addEventListener('resize', () => {
       fitBrideHeightToSeats();
       positionBride();
