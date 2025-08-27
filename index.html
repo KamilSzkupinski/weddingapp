@@ -670,7 +670,7 @@
     if (header) header.scrollIntoView({ behavior, block: "start", inline: "start" });
     const input = document.getElementById("search");
     if (input) input.focus({ preventScroll: true }); // opcjonalnie otwiera klawiaturę na mobile
-  }
+  };
 
   // uruchom po załadowaniu (dwustopniowo, żeby zadziałało na iOS/Android)
   window.addEventListener("load", () => gotoSearch("auto"));
