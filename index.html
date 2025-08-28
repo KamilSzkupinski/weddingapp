@@ -663,19 +663,38 @@
     document.getElementById("search").addEventListener("keydown", (e) => {
       if (e.key === "Enter") findGuest();
     });
-	function gotoSearch(behavior = "auto") {
-    // przewiń do lewego brzegu i do nagłówka z wyszukiwarką
-    window.scrollTo({ 
+	(function() {
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
+
+    function gotoCenter(behavior) {
+      const layout = document.querySelector('.layout');
+      if (layout) {
+        const rect = layout.getBoundingClientRect();
+        const mid = rect.top + window.pageYOffset + rect.height / 2;
+        window.scrollTo({ 
           top: mid - window.innerHeight / 2, 
           left: (document.body.scrollWidth - window.innerWidth) / 2, 
           behavior: behavior || 'auto' 
         });
+      }
+    }
     const header = document.querySelector("header");
     if (header) header.scrollIntoView({ behavior, block: "start", inline: "start" });
     const input = document.getElementById("search");
     if (input) input.focus({ preventScroll: true }); // opcjonalnie otwiera klawiaturę na mobile
   };
+    function boot() {
+      gotoCenter('auto');
+      setTimeout(() => gotoCenter('auto'), 100);
+      setTimeout(() => gotoCenter('auto'), 300);
+    }
 
+    window.addEventListener('DOMContentLoaded', boot);
+    window.addEventListener('load', boot);
+    window.addEventListener('pageshow', () => setTimeout(boot, 50));
+    window.addEventListener('orientationchange', () => setTimeout(boot, 150));
+    window.addEventListener('resize', () => setTimeout(boot, 150));
+  })();
   // uruchom po załadowaniu (dwustopniowo, żeby zadziałało na iOS/Android)
   window.addEventListener("load", () => gotoSearch("auto"));
   // gdy przeglądarka ustawi viewport (czasem po krótkiej chwili)
