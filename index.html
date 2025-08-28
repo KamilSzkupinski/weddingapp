@@ -663,37 +663,51 @@
     document.getElementById("search").addEventListener("keydown", (e) => {
       if (e.key === "Enter") findGuest();
     });
-	(function() {
-    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
+	  (function() {
+    try { 
+      if ('scrollRestoration' in history) 
+        history.scrollRestoration = 'manual'; 
+    } catch(e) {}
 
-    function gotoCenter(behavior) {
-      const layout = document.querySelector('.layout');
+    function centerViewport(behavior) {
+      var root = document.scrollingElement || document.documentElement;
+      var layout = document.querySelector('.layout');
+
+      // horyzontalne wyśrodkowanie
+      var targetLeft = Math.max(0, (root.scrollWidth - root.clientWidth) / 2);
+
+      // pionowe wyśrodkowanie środka mapy
+      var targetTop = 0;
       if (layout) {
-        const rect = layout.getBoundingClientRect();
-        const mid = rect.top + window.pageYOffset + rect.height / 2;
-        window.scrollTo({ 
-          top: mid - window.innerHeight / 2, 
-          left: (document.body.scrollWidth - window.innerWidth) / 2, 
-          behavior: behavior || 'auto' 
-        });
+        var r = layout.getBoundingClientRect();
+        var absTop = r.top + window.pageYOffset;
+        targetTop = Math.max(0, absTop + r.height / 2 - root.clientHeight / 2);
       }
-    }
-    const header = document.querySelector("header");
-    if (header) header.scrollIntoView({ behavior, block: "start", inline: "start" });
-    const input = document.getElementById("search");
-    if (input) input.focus({ preventScroll: true }); // opcjonalnie otwiera klawiaturę na mobile
-  };
-    function boot() {
-      gotoCenter('auto');
-      setTimeout(() => gotoCenter('auto'), 100);
-      setTimeout(() => gotoCenter('auto'), 300);
+
+      window.scrollTo({ left: targetLeft, top: targetTop, behavior: behavior || 'auto' });
     }
 
-    window.addEventListener('DOMContentLoaded', boot);
-    window.addEventListener('load', boot);
-    window.addEventListener('pageshow', () => setTimeout(boot, 50));
-    window.addEventListener('orientationchange', () => setTimeout(boot, 150));
-    window.addEventListener('resize', () => setTimeout(boot, 150));
+    function bootCenter() {
+      var root = document.scrollingElement || document.documentElement;
+      var tries = 0, maxTries = 20;
+      var lastW = 0, lastH = 0;
+
+      function tick() {
+        var w = root.scrollWidth, h = root.scrollHeight;
+        if ((w !== lastW || h !== lastH) || tries < 3) {
+          centerViewport('auto');
+          lastW = w; lastH = h;
+        }
+        if (++tries < maxTries) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener('DOMContentLoaded', bootCenter);
+    window.addEventListener('load', bootCenter);
+    window.addEventListener('pageshow', bootCenter);
+    window.addEventListener('orientationchange', function(){ setTimeout(bootCenter, 120); });
+    window.addEventListener('resize', function(){ setTimeout(bootCenter, 120); });
   })();
   // uruchom po załadowaniu (dwustopniowo, żeby zadziałało na iOS/Android)
   window.addEventListener("load", () => gotoSearch("auto"));
