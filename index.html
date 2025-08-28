@@ -665,7 +665,11 @@
     });
 	function gotoSearch(behavior = "auto") {
     // przewiń do lewego brzegu i do nagłówka z wyszukiwarką
-    window.scrollTo({ left: 0, top: 0, behavior });
+    window.scrollTo({ 
+          top: mid - window.innerHeight / 2, 
+          left: (document.body.scrollWidth - window.innerWidth) / 2, 
+          behavior: behavior || 'auto' 
+        });
     const header = document.querySelector("header");
     if (header) header.scrollIntoView({ behavior, block: "start", inline: "start" });
     const input = document.getElementById("search");
