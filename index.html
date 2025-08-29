@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <!-- Zachowujemy pinch-zoom, ale bez osobnych styli mobilnych -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.5, minimum-scale=0.1, maximum-scale=5" />
+  <meta name="viewport" content="width=1000, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5" />
   <title>Wesele Darii & Daniela – Interaktywna mapa stołów</title>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -663,60 +663,7 @@
     document.getElementById("search").addEventListener("keydown", (e) => {
       if (e.key === "Enter") findGuest();
     });
-	  (function() {
-    try { 
-      if ('scrollRestoration' in history) 
-        history.scrollRestoration = 'manual'; 
-    } catch(e) {}
-
-    function centerViewport(behavior) {
-      var root = document.scrollingElement || document.documentElement;
-      var layout = document.querySelector('.layout');
-
-      // horyzontalne wyśrodkowanie
-      var targetLeft = Math.max(0, (root.scrollWidth - root.clientWidth) / 2);
-
-      // pionowe wyśrodkowanie środka mapy
-      var targetTop = 0;
-      if (layout) {
-        var r = layout.getBoundingClientRect();
-        var absTop = r.top + window.pageYOffset;
-        targetTop = Math.max(0, absTop + r.height / 2 - root.clientHeight / 2);
-      }
-
-      window.scrollTo({ left: targetLeft, top: targetTop, behavior: behavior || 'auto' });
-    }
-
-    function bootCenter() {
-      var root = document.scrollingElement || document.documentElement;
-      var tries = 0, maxTries = 20;
-      var lastW = 0, lastH = 0;
-
-      function tick() {
-        var w = root.scrollWidth, h = root.scrollHeight;
-        if ((w !== lastW || h !== lastH) || tries < 3) {
-          centerViewport('auto');
-          lastW = w; lastH = h;
-        }
-        if (++tries < maxTries) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    }
-
-    window.addEventListener('DOMContentLoaded', bootCenter);
-    window.addEventListener('load', bootCenter);
-    window.addEventListener('pageshow', bootCenter);
-    window.addEventListener('orientationchange', function(){ setTimeout(bootCenter, 120); });
-    window.addEventListener('resize', function(){ setTimeout(bootCenter, 120); });
-  })();
-  // uruchom po załadowaniu (dwustopniowo, żeby zadziałało na iOS/Android)
-  window.addEventListener("load", () => gotoSearch("auto"));
-  // gdy przeglądarka ustawi viewport (czasem po krótkiej chwili)
-  setTimeout(() => gotoSearch("auto"), 50);
-
-  // dodatkowo po zmianie orientacji/rozmiaru
-  window.addEventListener("orientationchange", () => setTimeout(gotoSearch, 50));
-  window.addEventListener("resize", () => setTimeout(gotoSearch, 50));
+	
   </script>
 </body>
 </html>
