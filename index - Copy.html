@@ -1,35 +1,36 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
+  <!-- Zachowujemy pinch-zoom, ale bez osobnych styli mobilnych -->
   <meta name="viewport" content="width=900, initial-scale=1.1, minimum-scale=0.3, maximum-scale=2" />
-  <title>Wesele Patrycji &amp; Kamila – Interaktywna mapa stołów</title>
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet">
+  <title>Wesele Patrycji & Kamila – Interaktywna mapa stołów</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* Nowa oliwkowa paleta barw */
-      --bg-olive: #e4eadf; /* Jednolity oliwkowy kolor tła strony */
-      --ink: #1a2116;
-      --accent: #a3b895;
-      --accent-strong: #647d52;
-      --highlight: #d1e5b8;
+      --bg1: #fdf8f4;
+      --bg2: #f9ece3;
+      --ink: #332d29;
+      --accent: #b99a84;
+      --accent-strong: #8c7b75;
+      --gold: #ffd700;
+
+      --tables-width: 1100px;  /* stała szerokość stołów */
+      --bride-gap: 200px;      /* stały bufor po prawej */
+      --floor-shift: 0px;    /* stały offset parkietu w lewo */
     }
     * { box-sizing: border-box; }
     html, body { height: 135%; overflow-x: auto; }
     body {
       margin: 0;
-      background-color: var(--bg-olive); /* Usunięto gradient na rzecz jednolitej oliwki */
+      background: linear-gradient(to bottom, var(--bg1), var(--bg2));
       color: var(--ink);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      position: relative;
-      z-index: 1;
     }
-
     header {
       padding: 24px 16px 8px;
       text-align: center;
-      position: relative;
-      z-index: 2;
     }
     header h1 {
       font-family: "Great Vibes", cursive;
@@ -47,140 +48,76 @@
     }
     .controls input {
       padding: 12px 14px;
-      border: 1px solid #c8d1c2;
+      border: 1px solid #d6c8bf;
       border-radius: 10px;
       min-width: 320px;
       font-size: 16px;
-      background: rgba(255, 255, 255, 0.9);
-      color: var(--ink);
+      background: #fff;
     }
     .controls button {
       padding: 12px 18px;
-      border: 1px solid #c8d1c2;
+      border: 1px solid #d6c8bf;
       border-radius: 10px;
-      background: #dde6d7;
-      color: var(--ink);
+      background: #efe3db;
       cursor: pointer;
       font-weight: 600;
-      transition: background 0.2s;
     }
-    .controls button:hover { background: #cedbc6; }
+    .controls button:hover { background: #e5d7ce; }
 
-    .legend {
-      text-align: center;
-      font-size: 14px;
-      opacity: 0.8;
-      margin: 10px 0 0;
-    }
-    .legend.hidden {
-      display: none;
-    }
-
-    /* Układ główny */
     .layout {
       max-width: none;
       margin: 0 auto;
-      padding: 20px 20px 60px;
+      padding: 8px 20px 30px;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 50px;
-      position: relative;
-      z-index: 2;
+      min-width: calc(200px + var(--tables-width) + var(--bride-gap) + 80px);
+      grid-template-columns: 200px 1fr;
+      gap: 24px;
+	  justify-content:center;
     }
 
-    /* PRZENIESIONE I ZAKOTWICZONE TŁO: zaczyna się równo z kółkami miejsc siedzących stołu prezydialnego */
-    .layout::before {
-      content: "";
-      position: absolute;
-      top: 20px; /* Wyrównanie do górnego paddingu layoutu (dokładnie tam gdzie zaczynają się kółka) */
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 1200px;
-      bottom: 370px; /* Zmienione na 370px - kończy się dokładnie na dole najdłuższych stołów (2 i 3) */
-      background-image: url('shrekfiona.jpg');
-      background-size: contain;
-      background-position: top center;
-      background-repeat: no-repeat;
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-      pointer-events: none;
-    }
-
-    /* Pokazanie tła po aktywacji wyszukiwania */
-    body.show-background .layout::before {
-      opacity: 0.35; /* Delikatna przezroczystość dla zachowania czytelności mapy */
-    }
-
-    /* Stół Młodych */
-    .bride-wrap {
+    /* Parkiet po lewej – stały wygląd */
+    .floor {
+      background: #d2bda9;
+      border-radius: 16px;
       display: flex;
-      flex-direction: column-reverse;
       align-items: center;
-      gap: 14px;
-      transition: opacity 1s ease-in-out; /* Płynne wejście przezroczystości */
-    }
-    
-    /* Po wyszukaniu stół prezydialny dostaje opacity 0.7 (70% widoczności, 30% prześwitu) */
-    body.show-background .bride-wrap {
-      opacity: 0.55;
-    }
-
-    .bride-rect {
-      height: 68px;
-      background: rgba(238, 242, 235, 0.9);
-      border: 2px solid var(--accent-strong);
-      border-radius: 12px;
-      display: grid;
-      place-items: center;
-      transition: box-shadow .25s ease, transform .2s ease;
-    }
-    .bride-rect.active {
-      box-shadow: 0 0 0 3px var(--accent-strong) inset, 0 10px 20px rgba(0,0,0,.08);
-      transform: translateY(-2px);
-    }
-    .bride-rect .label {
-      font-weight: 700;
-      color: var(--ink);
-      font-size: 24px;
-    }
-    .bride-seats {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: 40px;
-      gap: 10px;
-      align-items: center;
-      justify-items: center;
-    }
-
-    /* Sekcja stołów dla gości */
-    .tables-wrap {
-      width: 100%;
-      display: flex;
       justify-content: center;
       position: relative;
+      transform: translateX(var(--floor-shift));
+	align-self: stretch;
+      width: 180px;
+    }
+    .floor span {
+      font-family: Georgia, serif;
+      font-size: 38px;
+      color: #222;
+      letter-spacing: .5px;
+    }
+
+    /* Kolumna stołów + stół Państwa Młodych po prawej */
+    .tables-wrap {
+      position: relative;
+      padding-right: calc(var(--bride-gap) + 24px);
+      min-height: 600px;
+      overflow: visible;
     }
     .tables {
       display: flex;
-      flex-direction: row;
-      gap: 50px;
-      justify-content: center;
-      align-items: flex-start;
+      flex-direction: column;
+      gap: 48px;
     }
-
-    /* Pojedynczy stół */
     .table-block {
       display: grid;
-      grid-template-columns: auto 68px auto;
+      grid-template-rows: auto 68px auto;
       gap: 12px;
-      align-items: stretch;
+      align-items: center;
       justify-items: center;
+      padding: 2px 0;
     }
     .table-rect {
-      width: 68px;
-      background: rgba(216, 224, 210, 0.9);
+      width: min(var(--tables-width), 100%);
+      height: 68px;
+      background: #e7d7cc;
       border: 2px solid var(--accent-strong);
       border-radius: 12px;
       display: grid;
@@ -193,22 +130,17 @@
       transform: translateY(-2px);
     }
     .table-rect .label {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
       font-weight: 700;
       font-size: 22px;
-      color: var(--ink);
-      padding: 15px 0;
+      color: #2b2420;
     }
 
-    .seats-col {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
+    .seats-row {
+      display: grid;
+      gap: 8px;
+      width: min(var(--tables-width), 100%);
+      justify-items: center;
     }
-
     .seat {
       width: 36px; height: 36px;
       border-radius: 50%;
@@ -217,50 +149,63 @@
       display: grid;
       place-items: center;
       font-size: 12px;
-      color: var(--ink);
       user-select: none;
       transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
-      flex-shrink: 0;
     }
     .seat:hover { transform: translateY(-2px); }
     .seat.you {
-      background: var(--highlight);
-      box-shadow: 0 0 0 3px var(--accent-strong) inset, 0 0 18px rgba(100, 125, 82, 0.5);
+      background: var(--gold);
+      box-shadow: 0 0 0 3px #b99a84 inset, 0 0 18px rgba(255, 204, 0, .6);
       font-weight: 700;
     }
 
-    /* Parkiet */
-    .floor {
-      background: rgba(188, 201, 178, 0.8);
-      border-radius: 16px;
+    /* Stół Młodych po prawej – stały, bez wariantów mobilnych */
+    .bride-wrap {
+      position: absolute;
+      right: 12px;
+      top: 0;
       display: flex;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      width: 100%;
-      max-width: 800px;
-      height: 240px; 
-      margin-top: 20px;
-      border: 2px dashed #99ab8d;
-      position: relative;
-      z-index: 2;
+      gap: 14px;
     }
-    .floor span {
-      font-family: Georgia, serif;
-      font-size: 38px;
-      color: var(--ink);
-      letter-spacing: .5px;
+    .bride-rect {
+      width: 68px;
+	  height: 1090px;
+      /* wysokość ustawiana dynamicznie w JS tak, aby każde miejsce było przy stole */
+      background: #fff7cc;
+      border: 2px solid var(--accent-strong);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+    }
+	.bride-rect.active {
+		box-shadow: 0 0 0 3px var(--accent-strong) inset, 0 10px 20px rgba(0,0,0,.08);
+		transform: translateY(-2px);
+	}
+    .bride-rect .label {
+      writing-mode: vertical-rl;
+      transform: rotate(0deg);
+      font-weight: 700;
+      color: #2b2420;
+    }
+    .bride-seats {
+      display: grid;
+      grid-auto-flow: row;
+      grid-auto-rows: 40px;
+      gap: 10px;
+      align-items: start;
+      justify-items: start;
     }
   
-    .layout.hidden { display: none !important; }
-    .layout.revealed { animation: fadeIn .35s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* Pokazuj mapę dopiero po wyszukaniu */
+.layout.hidden { display: none !important; }
+.layout.revealed { animation: fadeIn .35s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-  </style>
+</style>
 </head>
 <body>
-  <audio id="searchAudio" src="duloc.mp3" preload="auto"></audio>
-  <audio id="donkeyAudio" src="osiol.mp3" preload="auto"></audio>
-
   <header>
     <h1>Witamy na weselu Patrycji &amp; Kamila!</h1>
     <p>Chcieliśmy wam ułatwić znalezienie swojego miejsca, więc zapraszamy do korzystania!</p>
@@ -268,30 +213,29 @@
       <input id="search" type="text" placeholder="Wpisz swoje imię i nazwisko" />
       <button id="btn">Szukaj</button>
     </div>
-    <div id="result" style="margin-top:10px;font-weight:600;color:var(--accent-strong);"></div>
-    <p class="legend" id="mainLegend">Sprawdź gdzie siedzisz wpisując swoje imię i nazwisko – podświetlimy właściwy stolik i miejsce!</p>
+    <div id="result" style="margin-top:10px;font-weight:600;color:#5a4637;"></div>
   </header>
 
   <section class="layout hidden">
-    
-    <div class="bride-wrap" id="brideWrap" aria-label="Stół Prezydialny">
-      <div class="bride-rect" id="brideRect"><span class="label">Stół Prezydialny</span></div>
-      <div class="bride-seats" id="brideSeats"></div>
-    </div>
-
-    <main class="tables-wrap">
-      <div class="tables" id="tables"></div>
-    </main>
-
     <aside class="floor" aria-label="Parkiet">
       <span>Parkiet</span>
     </aside>
 
+    <main class="tables-wrap">
+      <div class="tables" id="tables"></div>
+
+      <div class="bride-wrap" id="brideWrap" aria-label="Stół Państwa Młodych">
+        <div class="bride-rect" id="brideRect"><span class="label">Stół Prezydialny</span></div>
+        <div class="bride-seats" id="brideSeats"></div>
+      </div>
+
+      <p class="legend">Wyszukaj swoje imię i nazwisko – podświetlimy właściwy stolik i miejsce.</p>
+    </main>
   </section>
 
   <script>
     const guests = [
-      { imie: "Antoni", nazwisko: "Sobol", stolik: "Prezydialny", miejsce: "1", wyszukiwalny: true },
+      { imie: "Antoni", nazwisko: "Test", stolik: "Prezydialny", miejsce: "1", wyszukiwalny: true },
       { imie: "Zofia", nazwisko: "Szkupińska", stolik: "Prezydialny", miejsce: "2", wyszukiwalny: true },
       { imie: "Nikodem", nazwisko: "Smołaga", stolik: "Prezydialny", miejsce: "3", wyszukiwalny: true },
       { imie: "Daria", nazwisko: "Bartosiak", stolik: "Prezydialny", miejsce: "4", wyszukiwalny: true },
@@ -404,8 +348,8 @@
       { imie: "Katarzyna", nazwisko: "Puczyńska", stolik: "3", miejsce: "32", wyszukiwalny: true },
       { imie: "Mateusz", nazwisko: "Szrama", stolik: "3", miejsce: "33", wyszukiwalny: true },
       { imie: "Klaudia", nazwisko: "Szrama", stolik: "3", miejsce: "34", wyszukiwalny: true },
-      { imie: "Renata", nazwisko: "Szcczepaniak", stolik: "3", miejsce: "35", wyszukiwalny: true },
-      { imie: "Andrzej", nazwisko: "Szcczepaniak", stolik: "3", miejsce: "36", wyszukiwalny: true },
+      { imie: "Renata", nazwisko: "Szczepaniak", stolik: "3", miejsce: "35", wyszukiwalny: true },
+      { imie: "Andrzej", nazwisko: "Szczepaniak", stolik: "3", miejsce: "36", wyszukiwalny: true },
       { imie: "Agnieszka", nazwisko: "Berent", stolik: "3", miejsce: "37", wyszukiwalny: true },
       { imie: "Sławomir", nazwisko: "Berent", stolik: "3", miejsce: "38", wyszukiwalny: true },
       { imie: "Marcin", nazwisko: "Włodarczyk", stolik: "3", miejsce: "39", wyszukiwalny: true },
@@ -445,118 +389,139 @@
       { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "4", miejsce: "33", wyszukiwalny: false },
       { imie: "Patrycja", nazwisko: "Michałowska", stolik: "4", miejsce: "34", wyszukiwalny: true },
       { imie: "Łukasz", nazwisko: "Czerwiński", stolik: "4", miejsce: "35", wyszukiwalny: true }
-    ];
+];
 
     const SEATS = {"1":28,"2":37,"3":40,"4":35,"Prezydialny":14};
 
     const tablesEl = document.getElementById("tables");
+    const brideWrap = document.getElementById("brideWrap");
     const brideSeats = document.getElementById("brideSeats");
     const brideRect = document.getElementById("brideRect");
-    const mainLegend = document.getElementById("mainLegend");
 
-    let successfulSearchCount = 0; // Licznik udanych kliknięć/wyszukiwań
-
-    function createVerticalTable(id) {
+    function createHorizontalTable(id) {
       const n = SEATS[id];
-      let leftCount = Math.floor(n / 2);
-      if (id === "2" || id === "4") {
-        leftCount = Math.ceil(n / 2);
-      }
-      const rightCount = n - leftCount;
+      const topCount = Math.floor(n/2);
+      const bottomCount = n - topCount;
 
       const block = document.createElement("div");
       block.className = "table-block";
       block.dataset.table = id;
 
-      const left = document.createElement("div");
-      left.className = "seats-col left";
+      const top = document.createElement("div");
+      top.className = "seats-row top";
+      top.style.gridTemplateColumns = `repeat(${topCount}, 1fr)`;
 
-      for (let i = 0; i < leftCount; i++) {
-        const idx = i + 1;
+      // górny rząd 1..topCount od PRAWEJ do LEWEJ
+      for (let i=0;i<topCount;i++) {
+        const idx = i+1;
         const s = document.createElement("button");
         s.type = "button";
         s.className = "seat";
         s.dataset.seat = idx;
         s.textContent = idx;
         s.title = `Stół ${id}, miejsce ${idx}`;
-        left.appendChild(s);
+        top.prepend(s);
       }
 
       const rect = document.createElement("div");
       rect.className = "table-rect";
       rect.innerHTML = `<span class="label">Stół ${id}</span>`;
-      
-      let rectRows = Math.max(leftCount, rightCount);
-      if (id === "2" || id === "3") {
-        rectRows = 20; 
-      }
-      rect.style.height = (rectRows * 36 + (rectRows - 1) * 8 + 16) + 'px';
 
-      const right = document.createElement("div");
-      right.className = "seats-col right";
+      const bottom = document.createElement("div");
+      bottom.className = "seats-row bottom";
+      bottom.style.gridTemplateColumns = `repeat(${bottomCount}, 1fr)`;
 
-      for (let i = 0; i < rightCount; i++) {
-        const idx = leftCount + i + 1;
+      // dolny rząd topCount+1..n od PRAWEJ do LEWEJ
+      for (let i=0;i<bottomCount;i++) {
+        const idx = topCount + i + 1;
         const s = document.createElement("button");
         s.type = "button";
         s.className = "seat";
         s.dataset.seat = idx;
         s.textContent = idx;
         s.title = `Stół ${id}, miejsce ${idx}`;
-        right.appendChild(s);
+        bottom.prepend(s);
       }
 
-      block.appendChild(left);
+      block.appendChild(top);
       block.appendChild(rect);
-      block.appendChild(right);
+      block.appendChild(bottom);
 
       rect.addEventListener("click", clearHighlights);
+
       tablesEl.appendChild(block);
     }
 
     function createBrideTable() {
-      const n = SEATS["Prezydialny"];
+      const n = SEATS["Państwa Młodych"];
       brideSeats.innerHTML = "";
-      for (let i = 1; i <= n; i++) {
+      for (let i=1;i<=n;i++) {
         const s = document.createElement("button");
         s.type = "button";
         s.className = "seat";
         s.dataset.seat = i;
         s.textContent = i;
-        s.title = `Stół Prezydialny, miejsce ${i}`;
+        s.title = `Stół Państwa Młodych, miejsce ${i}
+
+    function fitBrideHeightToSeats() {
+      const n = SEATS["Państwa Młodych"];
+      if (!n) return;
+      const sampleSeat = document.querySelector('.bride-seats .seat') || document.querySelector('.seat');
+      if (!sampleSeat) return;
+      const seatStyles = window.getComputedStyle(sampleSeat);
+      const seatH = parseFloat(seatStyles.height);
+      const gap = parseFloat(window.getComputedStyle(brideSeats).gap) || 10;
+      const padding = 20; // mały margines
+      const total = n * seatH + (n - 1) * gap + padding;
+      brideRect.style.height = total + 'px';
+    }
+
+`;
         brideSeats.appendChild(s);
       }
     }
 
-    function fitBrideWidthToSeats() {
-      const n = SEATS["Prezydialny"];
-      if (!n) return;
-      const seatW = 36;
-      const gap = 10;
-      const padding = 40;
-      const total = n * seatW + (n - 1) * gap + padding;
-      brideRect.style.width = total + 'px';
-    }
+  
 
-    ["4", "3", "2", "1"].forEach(createVerticalTable);
+    // Render
+    ["1","2","3","4","5"].forEach(createHorizontalTable);
     createBrideTable();
 
-    window.requestAnimationFrame(fitBrideWidthToSeats);
-    window.addEventListener('resize', fitBrideWidthToSeats);
+    // Wycentruj stół Młodych względem stołu 3 + dopasuj wysokość
+    function positionBride() {
+      const t3 = document.querySelector('.table-block[data-table="3"]');
+      if (t3) {
+        const wrapRect = tablesEl.getBoundingClientRect();
+        const t3Rect = t3.getBoundingClientRect();
+        const brideRectBox = brideWrap.getBoundingClientRect();
+        const t3Center = (t3Rect.top + t3Rect.bottom) / 2;
+        const topInWrap = t3Center - wrapRect.top - (brideRectBox.height / 2);
+        brideWrap.style.top = Math.max(0, topInWrap) + "px";
+      }
+    }
 
+    window.requestAnimationFrame(() => {
+      fitBrideHeightToSeats();
+      positionBride();
+    });
+    window.addEventListener('resize', () => {
+      fitBrideHeightToSeats();
+      positionBride();
+    });
+
+    // Wyszukiwanie
     function normalizePl(txt) {
       return (txt || "").toString().toLowerCase()
         .normalize('NFD')
         .replace(/\p{Diacritic}/gu, '')
         .trim();
     }
-
     function clearHighlights() {
       document.querySelectorAll(".seat.you").forEach(el => el.classList.remove("you"));
       document.querySelectorAll(".table-rect.active").forEach(el => el.classList.remove("active"));
-      document.querySelectorAll(".bride-rect.active").forEach(el => el.classList.remove("active"));
-    }
+	  document.querySelectorAll(".bride-rect.active").forEach(el => el.classList.remove("active")); // +++
 
+    }
     function findGuest() {
       const input = document.getElementById("search").value;
       const needle = normalizePl(input);
@@ -568,28 +533,8 @@
         return;
       }
 
-      // Odtwarzanie dźwięku w zależności od liczby kliknięć
-      let audio;
-      if (successfulSearchCount === 0) {
-        audio = document.getElementById("searchAudio");
-      } else {
-        audio = document.getElementById("donkeyAudio");
-      }
-      successfulSearchCount++; // Zwiększamy licznik, by następnym razem uruchomił się Osioł
 
-      if (audio) {
-        audio.currentTime = 0; 
-        audio.play().catch(err => {
-          console.log("Odtwarzanie audio zostało zablokowane przez przeglądarkę:", err);
-        });
-      }
-
-      document.body.classList.add("show-background");
-
-      if (mainLegend) {
-        mainLegend.classList.add("hidden");
-      }
-
+      // Pokaż mapę stołów dopiero po udanym wyszukaniu
       const layoutEl = document.querySelector('.layout');
       if (layoutEl && layoutEl.classList.contains('hidden')) {
         layoutEl.classList.remove('hidden');
@@ -599,17 +544,19 @@
       const tableId = (person.stolik || "").toString().trim();
       const seatNum = parseInt(person.miejsce, 10);
 
+      // Wyświetl komunikat o znalezionym miejscu
       const resultBox = document.getElementById("result");
       if (resultBox) {
         resultBox.textContent = `Twoje miejsce jest przy: Stole ${tableId}, miejsce ${seatNum}`;
       }
 
-      if (tableId === "Prezydialny") {
+
+      if (tableId === "Państwa Młodych") {
         const seatEl = brideSeats.querySelector(`.seat[data-seat="${seatNum}"]`);
         if (seatEl) seatEl.classList.add("you");
         document.getElementById("brideWrap").scrollIntoView({ behavior: "smooth", block: "center" });
-        document.getElementById("brideRect")?.classList.add("active");
-        return;
+          document.getElementById("brideRect")?.classList.add("active");
+		return;
       }
 
       const block = document.querySelector(`.table-block[data-table="${tableId}"]`);
@@ -625,33 +572,33 @@
     document.getElementById("search").addEventListener("keydown", (e) => {
       if (e.key === "Enter") findGuest();
     });
+	(function() {
+  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
 
-    (function() {
-      try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch(e) {}
+  function gotoSearch(behavior) {
+    const header = document.querySelector('header');
+    // zawsze przewiń do lewego brzegu
+    window.scrollTo({ left: 0, top: 0, behavior: behavior || 'auto' });
+    if (header) {
+      header.scrollIntoView({ behavior: behavior || 'auto', block: 'start', inline: 'nearest' });
+    }
+  }
 
-      function gotoSearch(behavior) {
-        const header = document.querySelector('header');
-        window.scrollTo({ left: 0, top: 0, behavior: behavior || 'auto' });
-        if (header) {
-          header.scrollIntoView({ behavior: behavior || 'auto', block: 'start', inline: 'nearest' });
-        }
-      }
+  function boot() {
+    let tries = 0;
+    function tick() {
+      gotoSearch('auto');
+      if (++tries < 10) setTimeout(tick, 100);
+    }
+    tick();
+  }
 
-      function boot() {
-        let tries = 0;
-        function tick() {
-          gotoSearch('auto');
-          if (++tries < 10) setTimeout(tick, 100);
-        }
-        tick();
-      }
-
-      window.addEventListener('DOMContentLoaded', boot);
-      window.addEventListener('load', boot);
-      window.addEventListener('pageshow', boot);
-      window.addEventListener('orientationchange', () => setTimeout(boot, 120));
-      window.addEventListener('resize', () => setTimeout(boot, 120));
-    })();
+  window.addEventListener('DOMContentLoaded', boot);
+  window.addEventListener('load', boot);
+  window.addEventListener('pageshow', boot);
+  window.addEventListener('orientationchange', () => setTimeout(boot, 120));
+  window.addEventListener('resize', () => setTimeout(boot, 120));
+})();
   </script>
 </body>
 </html>
