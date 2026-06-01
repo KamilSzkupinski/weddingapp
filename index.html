@@ -448,10 +448,12 @@
       { imie: "Daniel", nazwisko: "Osiecki", stolik: "4", miejsce: "32", wyszukiwalny: true },
       { imie: "Osoba", nazwisko: "Towarzysząca", stolik: "4", miejsce: "33", wyszukiwalny: false },
       { imie: "Patrycja", nazwisko: "Michałowska", stolik: "4", miejsce: "34", wyszukiwalny: true },
-      { imie: "Łukasz", nazwisko: "Czerwiński", stolik: "4", miejsce: "35", wyszukiwalny: true }
+      { imie: "Łukasz", nazwisko: "Czerwiński", stolik: "4", miejsce: "35", wyszukiwalny: true },
+	  { imie: "Dominik", nazwisko: "Janiak", stolik: "4", miejsce: "36", wyszukiwalny: true },
+      { imie: "Zofia", nazwisko: "Janiak", stolik: "4", miejsce: "37", wyszukiwalny: true }
     ];
 
-    const SEATS = {"1":28,"2":37,"3":40,"4":35,"Prezydialny":14};
+    const SEATS = {"1":28,"2":37,"3":40,"4":37,"Prezydialny":14};
 
     const tablesEl = document.getElementById("tables");
     const brideSeats = document.getElementById("brideSeats");
@@ -535,7 +537,7 @@
     function fitBrideWidthToSeats() {
       const n = SEATS["Prezydialny"];
       if (!n) return;
-      const seatW = 36;
+      const seatW = 38;
       const gap = 10;
       const padding = 40;
       const total = n * seatW + (n - 1) * gap + padding;
