@@ -98,7 +98,7 @@
       transform: translateX(-50%);
       width: 100%;
       max-width: 1200px;
-      bottom: 370px; /* Zmienione na 370px - kończy się dokładnie na dole najdłuższych stołów (2 i 3) */
+      bottom: 370px; /* Zmienione na 370px - kończy się dokładnie na dnie najdłuższych stołów (2 i 3) */
       background-image: url('shrekfiona.jpg');
       background-size: contain;
       background-position: top center;
@@ -377,7 +377,7 @@
       { imie: "Jarosław", nazwisko: "Kacela", stolik: "3", miejsce: "1", wyszukiwalny: true },
       { imie: "Wiesława", nazwisko: "Kacela", stolik: "3", miejsce: "2", wyszukiwalny: true },
       { imie: "Jarosław", nazwisko: "Zjawiony", stolik: "3", miejsce: "3", wyszukiwalny: true },
-      { imie: "Terasa", nazwisko: "Zjawiona", stolik: "3", miejsce: "4", wyszukiwalny: true },
+      { imie: "Teresa", nazwisko: "Zjawiona", stolik: "3", miejsce: "4", wyszukiwalny: true },
       { imie: "Renata", nazwisko: "Kasińska", stolik: "3", miejsce: "5", wyszukiwalny: true },
       { imie: "Roman", nazwisko: "Kasiński", stolik: "3", miejsce: "6", wyszukiwalny: true },
       { imie: "Jolanta", nazwisko: "Bartosiak", stolik: "3", miejsce: "7", wyszukiwalny: true },
@@ -464,8 +464,12 @@
 
     function createVerticalTable(id) {
       const n = SEATS[id];
+      
+      // Zachowujemy asymetryczny podział specjalnie dla stołu 4, aby miejsce 19 wylądowało po prawej stronie na samej górze
       let leftCount = Math.floor(n / 2);
-      if (id === "2" || id === "4") {
+      if (id === "4") {
+        leftCount = 18; 
+      } else if (id === "2") {
         leftCount = Math.ceil(n / 2);
       }
       const rightCount = n - leftCount;
@@ -492,8 +496,9 @@
       rect.className = "table-rect";
       rect.innerHTML = `<span class="label">Stół ${id}</span>`;
       
+      // Stoły 2, 3 oraz 4 otrzymują dokładnie taką samą wysokość blatu (20 rzędów)
       let rectRows = Math.max(leftCount, rightCount);
-      if (id === "2" || id === "3") {
+      if (id === "2" || id === "3" || id === "4") {
         rectRows = 20; 
       }
       rect.style.height = (rectRows * 36 + (rectRows - 1) * 8 + 16) + 'px';
